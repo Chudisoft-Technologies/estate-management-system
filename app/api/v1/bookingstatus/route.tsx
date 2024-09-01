@@ -4,17 +4,18 @@ import { authenticate } from '../auth/auth';
 
 const prisma = new PrismaClient();
 const allowedRoles = ['admin', 'user'];
+
 /**
  * @swagger
  * tags:
- *   - name: BookingStatuses
- *     description: Booking management
+ *   - name: BookingStatus
+ *     description: Booking status management
  *
- * /bookingstatuses:
+ * /booking-statuses:
  *   get:
  *     tags:
- *       - BookingStatuses
- *     summary: Retrieve a list of bookingstatuses or a specific booking by ID
+ *       - BookingStatus
+ *     summary: Retrieve a list of booking statuses or a specific booking status by ID
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -22,7 +23,7 @@ const allowedRoles = ['admin', 'user'];
  *         name: id
  *         schema:
  *           type: integer
- *         description: ID of the booking to retrieve
+ *         description: ID of the booking status to retrieve
  *       - in: query
  *         name: page
  *         schema:
@@ -37,7 +38,7 @@ const allowedRoles = ['admin', 'user'];
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
+ *         description: Field to sort by (e.g., "status", "createdAt")
  *       - in: query
  *         name: order
  *         schema:
@@ -45,28 +46,23 @@ const allowedRoles = ['admin', 'user'];
  *           enum: [asc, desc]
  *         description: Order of sorting
  *       - in: query
- *         name: name
+ *         name: status
  *         schema:
  *           type: string
- *         description: Filter by name
- *       - in: query
- *         name: costMin
- *         schema:
- *           type: number
- *         description: Minimum cost filter
+ *         description: Filter by status
  *     responses:
  *       200:
- *         description: Booking details or a list of bookingstatuses
+ *         description: Booking status details or a list of booking statuses
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Access Denied
  *       404:
- *         description: Booking not found
+ *         description: Booking status not found
  *   post:
  *     tags:
- *       - BookingStatuses
- *     summary: Create a new booking
+ *       - BookingStatus
+ *     summary: Create a new booking status
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -76,30 +72,21 @@ const allowedRoles = ['admin', 'user'];
  *           schema:
  *             type: object
  *             properties:
- *               name:
- *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
- *                 type: string
- *               address:
+ *               status:
  *                 type: string
  *             required:
- *               - name
- *               - cost
- *               - costBy
- *               - address
+ *               - status
  *     responses:
  *       201:
- *         description: Booking created
+ *         description: Booking status created
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Access Denied
  *   put:
  *     tags:
- *       - BookingStatuses
- *     summary: Update an existing booking
+ *       - BookingStatus
+ *     summary: Update an existing booking status
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -111,25 +98,19 @@ const allowedRoles = ['admin', 'user'];
  *             properties:
  *               id:
  *                 type: integer
- *               name:
- *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
- *                 type: string
- *               address:
+ *               status:
  *                 type: string
  *     responses:
  *       200:
- *         description: Booking updated
+ *         description: Booking status updated
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Access Denied
  *   delete:
  *     tags:
- *       - BookingStatuses
- *     summary: Delete an booking
+ *       - BookingStatus
+ *     summary: Delete a booking status
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -138,10 +119,10 @@ const allowedRoles = ['admin', 'user'];
  *         schema:
  *           type: integer
  *         required: true
- *         description: ID of the booking to delete
+ *         description: ID of the booking status to delete
  *     responses:
  *       200:
- *         description: Booking deleted
+ *         description: Booking status deleted
  *       401:
  *         description: Unauthorized
  *       403:

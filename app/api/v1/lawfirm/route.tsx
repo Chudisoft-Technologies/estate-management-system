@@ -3,18 +3,19 @@ import { PrismaClient, LawFirm } from '@prisma/client';
 import { authenticate } from '../auth/auth';
 
 const prisma = new PrismaClient();
+const allowedRoles = ['admin', 'user'];
 
 /**
  * @swagger
  * tags:
  *   - name: LawFirms
- *     description: LawFirm management
+ *     description: Law firm management
  *
- * /lawfirms:
+ * /law-firms:
  *   get:
  *     tags:
  *       - LawFirms
- *     summary: Retrieve a list of lawfirms or a specific lawfirm by ID
+ *     summary: Retrieve a list of law firms or a specific law firm by ID
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -22,7 +23,7 @@ const prisma = new PrismaClient();
  *         name: id
  *         schema:
  *           type: integer
- *         description: ID of the lawfirm to retrieve
+ *         description: ID of the law firm to retrieve
  *       - in: query
  *         name: page
  *         schema:
@@ -37,7 +38,7 @@ const prisma = new PrismaClient();
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
+ *         description: Field to sort by (e.g., "name", "city")
  *       - in: query
  *         name: order
  *         schema:
@@ -50,23 +51,23 @@ const prisma = new PrismaClient();
  *           type: string
  *         description: Filter by name
  *       - in: query
- *         name: costMin
+ *         name: city
  *         schema:
- *           type: number
- *         description: Minimum cost filter
+ *           type: string
+ *         description: Filter by city
  *     responses:
  *       200:
- *         description: LawFirm details or a list of lawfirms
+ *         description: Law firm details or a list of law firms
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Access Denied
  *       404:
- *         description: LawFirm not found
+ *         description: Law firm not found
  *   post:
  *     tags:
  *       - LawFirms
- *     summary: Create a new lawfirm
+ *     summary: Create a new law firm
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -78,20 +79,20 @@ const prisma = new PrismaClient();
  *             properties:
  *               name:
  *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
+ *               city:
  *                 type: string
  *               address:
  *                 type: string
+ *               contactEmail:
+ *                 type: string
  *             required:
  *               - name
- *               - cost
- *               - costBy
+ *               - city
  *               - address
+ *               - contactEmail
  *     responses:
  *       201:
- *         description: LawFirm created
+ *         description: Law firm created
  *       401:
  *         description: Unauthorized
  *       403:
@@ -99,7 +100,7 @@ const prisma = new PrismaClient();
  *   put:
  *     tags:
  *       - LawFirms
- *     summary: Update an existing lawfirm
+ *     summary: Update an existing law firm
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -113,15 +114,15 @@ const prisma = new PrismaClient();
  *                 type: integer
  *               name:
  *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
+ *               city:
  *                 type: string
  *               address:
  *                 type: string
+ *               contactEmail:
+ *                 type: string
  *     responses:
  *       200:
- *         description: LawFirm updated
+ *         description: Law firm updated
  *       401:
  *         description: Unauthorized
  *       403:
@@ -129,7 +130,7 @@ const prisma = new PrismaClient();
  *   delete:
  *     tags:
  *       - LawFirms
- *     summary: Delete an lawfirm
+ *     summary: Delete a law firm
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -138,10 +139,10 @@ const prisma = new PrismaClient();
  *         schema:
  *           type: integer
  *         required: true
- *         description: ID of the lawfirm to delete
+ *         description: ID of the law firm to delete
  *     responses:
  *       200:
- *         description: LawFirm deleted
+ *         description: Law firm deleted
  *       401:
  *         description: Unauthorized
  *       403:

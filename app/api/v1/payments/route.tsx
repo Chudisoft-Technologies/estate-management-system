@@ -3,6 +3,8 @@ import { PrismaClient, Payment } from '@prisma/client';
 import { authenticate } from '../auth/auth';
 
 const prisma = new PrismaClient();
+const allowedRoles = ['admin', 'user'];
+
 
 /**
  * @swagger
@@ -37,7 +39,7 @@ const prisma = new PrismaClient();
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
+ *         description: Field to sort by (e.g., "amount", "date")
  *       - in: query
  *         name: order
  *         schema:
@@ -45,15 +47,10 @@ const prisma = new PrismaClient();
  *           enum: [asc, desc]
  *         description: Order of sorting
  *       - in: query
- *         name: name
+ *         name: method
  *         schema:
  *           type: string
- *         description: Filter by name
- *       - in: query
- *         name: costMin
- *         schema:
- *           type: number
- *         description: Minimum cost filter
+ *         description: Filter by payment method
  *     responses:
  *       200:
  *         description: Payment details or a list of payments
@@ -76,19 +73,19 @@ const prisma = new PrismaClient();
  *           schema:
  *             type: object
  *             properties:
- *               name:
- *                 type: string
- *               cost:
+ *               amount:
  *                 type: number
- *               costBy:
+ *               date:
  *                 type: string
- *               address:
+ *               method:
  *                 type: string
+ *               rentId:
+ *                 type: integer
  *             required:
- *               - name
- *               - cost
- *               - costBy
- *               - address
+ *               - amount
+ *               - date
+ *               - method
+ *               - rentId
  *     responses:
  *       201:
  *         description: Payment created
@@ -111,14 +108,14 @@ const prisma = new PrismaClient();
  *             properties:
  *               id:
  *                 type: integer
- *               name:
- *                 type: string
- *               cost:
+ *               amount:
  *                 type: number
- *               costBy:
+ *               date:
  *                 type: string
- *               address:
+ *               method:
  *                 type: string
+ *               rentId:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Payment updated
@@ -129,7 +126,7 @@ const prisma = new PrismaClient();
  *   delete:
  *     tags:
  *       - Payments
- *     summary: Delete an payment
+ *     summary: Delete a payment
  *     security:
  *       - bearerAuth: []
  *     parameters:

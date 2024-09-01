@@ -3,149 +3,151 @@ import { PrismaClient, Building } from '@prisma/client';
 import { authenticate } from '../auth/auth';
 
 const prisma = new PrismaClient();
+const allowedRoles = ['admin', 'user'];
+
 /**
- * @swagger
- * tags:
- *   - name: Buildings
- *     description: Building management
- *
- * /buildings:
- *   get:
- *     tags:
- *       - Buildings
- *     summary: Retrieve a list of buildings or a specific building by ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: id
- *         schema:
- *           type: integer
- *         description: ID of the building to retrieve
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: The page number to retrieve
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Number of items per page
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
- *       - in: query
- *         name: order
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *         description: Order of sorting
- *       - in: query
- *         name: name
- *         schema:
- *           type: string
- *         description: Filter by name
- *       - in: query
- *         name: costMin
- *         schema:
- *           type: number
- *         description: Minimum cost filter
- *     responses:
- *       200:
- *         description: Building details or a list of buildings
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- *       404:
- *         description: Building not found
- *   post:
- *     tags:
- *       - Buildings
- *     summary: Create a new building
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
- *                 type: string
- *               address:
- *                 type: string
- *             required:
- *               - name
- *               - cost
- *               - costBy
- *               - address
- *     responses:
- *       201:
- *         description: Building created
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- *   put:
- *     tags:
- *       - Buildings
- *     summary: Update an existing building
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *               name:
- *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
- *                 type: string
- *               address:
- *                 type: string
- *     responses:
- *       200:
- *         description: Building updated
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- *   delete:
- *     tags:
- *       - Buildings
- *     summary: Delete an building
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID of the building to delete
- *     responses:
- *       200:
- *         description: Building deleted
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- */
+* @swagger
+* tags:
+*   - name: Buildings
+*     description: Building management
+*
+* /buildings:
+*   get:
+*     tags:
+*       - Buildings
+*     summary: Retrieve a list of buildings or a specific building by ID
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: query
+*         name: id
+*         schema:
+*           type: integer
+*         description: ID of the building to retrieve
+*       - in: query
+*         name: page
+*         schema:
+*           type: integer
+*         description: The page number to retrieve
+*       - in: query
+*         name: limit
+*         schema:
+*           type: integer
+*         description: Number of items per page
+*       - in: query
+*         name: sortBy
+*         schema:
+*           type: string
+*         description: Field to sort by (e.g., "name", "numOfFloors")
+*       - in: query
+*         name: order
+*         schema:
+*           type: string
+*           enum: [asc, desc]
+*         description: Order of sorting
+*       - in: query
+*         name: name
+*         schema:
+*           type: string
+*         description: Filter by name
+*       - in: query
+*         name: estate
+*         schema:
+*           type: string
+*         description: Filter by estate
+*     responses:
+*       200:
+*         description: Building details or a list of buildings
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*       404:
+*         description: Building not found
+*   post:
+*     tags:
+*       - Buildings
+*     summary: Create a new building
+*     security:
+*       - bearerAuth: []
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               name:
+*                 type: string
+*               estate:
+*                 type: string
+*               address:
+*                 type: string
+*               numOfFloors:
+*                 type: integer
+*             required:
+*               - name
+*               - address
+*               - numOfFloors
+*     responses:
+*       201:
+*         description: Building created
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*   put:
+*     tags:
+*       - Buildings
+*     summary: Update an existing building
+*     security:
+*       - bearerAuth: []
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               id:
+*                 type: integer
+*               name:
+*                 type: string
+*               estate:
+*                 type: string
+*               address:
+*                 type: string
+*               numOfFloors:
+*                 type: integer
+*     responses:
+*       200:
+*         description: Building updated
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*   delete:
+*     tags:
+*       - Buildings
+*     summary: Delete a building
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: query
+*         name: id
+*         schema:
+*           type: integer
+*         required: true
+*         description: ID of the building to delete
+*     responses:
+*       200:
+*         description: Building deleted
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*/
+
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);

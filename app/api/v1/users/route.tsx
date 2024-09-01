@@ -5,150 +5,163 @@ import { hashPassword } from '@/utils/auth';
 import { error } from 'console';
 
 const prisma = new PrismaClient();
+const allowedRoles = ['admin', 'user'];
 
 /**
- * @swagger
- * tags:
- *   - name: Users
- *     description: User management
- *
- * /users:
- *   get:
- *     tags:
- *       - Users
- *     summary: Retrieve a list of users or a specific user by ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: id
- *         schema:
- *           type: integer
- *         description: ID of the user to retrieve
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: The page number to retrieve
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Number of items per page
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
- *       - in: query
- *         name: order
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *         description: Order of sorting
- *       - in: query
- *         name: name
- *         schema:
- *           type: string
- *         description: Filter by name
- *       - in: query
- *         name: costMin
- *         schema:
- *           type: number
- *         description: Minimum cost filter
- *     responses:
- *       200:
- *         description: User details or a list of users
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- *       404:
- *         description: User not found
- *   post:
- *     tags:
- *       - Users
- *     summary: Create a new user
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
- *                 type: string
- *               address:
- *                 type: string
- *             required:
- *               - name
- *               - cost
- *               - costBy
- *               - address
- *     responses:
- *       201:
- *         description: User created
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- *   put:
- *     tags:
- *       - Users
- *     summary: Update an existing user
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *               name:
- *                 type: string
- *               cost:
- *                 type: number
- *               costBy:
- *                 type: string
- *               address:
- *                 type: string
- *     responses:
- *       200:
- *         description: User updated
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- *   delete:
- *     tags:
- *       - Users
- *     summary: Delete an user
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID of the user to delete
- *     responses:
- *       200:
- *         description: User deleted
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Access Denied
- */
+* @swagger
+* tags:
+*   - name: Users
+*     description: User management
+*
+* /users:
+*   get:
+*     tags:
+*       - Users
+*     summary: Retrieve a list of users or a specific user by ID
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: query
+*         name: id
+*         schema:
+*           type: string
+*         description: ID of the user to retrieve
+*       - in: query
+*         name: page
+*         schema:
+*           type: integer
+*         description: The page number to retrieve
+*       - in: query
+*         name: limit
+*         schema:
+*           type: integer
+*         description: Number of items per page
+*       - in: query
+*         name: sortBy
+*         schema:
+*           type: string
+*         description: Field to sort by (e.g., "name", "email")
+*       - in: query
+*         name: order
+*         schema:
+*           type: string
+*           enum: [asc, desc]
+*         description: Order of sorting
+*       - in: query
+*         name: name
+*         schema:
+*           type: string
+*         description: Filter by name
+*       - in: query
+*         name: email
+*         schema:
+*           type: string
+*         description: Filter by email
+*     responses:
+*       200:
+*         description: User details or a list of users
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*       404:
+*         description: User not found
+*   post:
+*     tags:
+*       - Users
+*     summary: Create a new user
+*     security:
+*       - bearerAuth: []
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               email:
+*                 type: string
+*               firstName:
+*                 type: string
+*               lastName:
+*                 type: string
+*               username:
+*                 type: string
+*               phone:
+*                 type: string
+*               password:
+*                 type: string
+*             required:
+*               - email
+*               - firstName
+*               - lastName
+*               - username
+*               - phone
+*               - password
+*     responses:
+*       201:
+*         description: User created
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*   put:
+*     tags:
+*       - Users
+*     summary: Update an existing user
+*     security:
+*       - bearerAuth: []
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               id:
+*                 type: string
+*               email:
+*                 type: string
+*               firstName:
+*                 type: string
+*               lastName:
+*                 type: string
+*               username:
+*                 type: string
+*               phone:
+*                 type: string
+*               password:
+*                 type: string
+*     responses:
+*       200:
+*         description: User updated
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*   delete:
+*     tags:
+*       - Users
+*     summary: Delete a user
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: query
+*         name: id
+*         schema:
+*           type: string
+*         required: true
+*         description: ID of the user to delete
+*     responses:
+*       200:
+*         description: User deleted
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Forbidden - Access Denied
+*/
+
+
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);

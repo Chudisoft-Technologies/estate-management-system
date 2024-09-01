@@ -3,6 +3,7 @@ import { PrismaClient, Expense } from '@prisma/client';
 import { authenticate } from '../auth/auth';
 
 const prisma = new PrismaClient();
+const allowedRoles = ['admin', 'user'];
 
 /**
  * @swagger
@@ -37,7 +38,7 @@ const prisma = new PrismaClient();
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
+ *         description: Field to sort by (e.g., "amount", "date")
  *       - in: query
  *         name: order
  *         schema:
@@ -45,15 +46,10 @@ const prisma = new PrismaClient();
  *           enum: [asc, desc]
  *         description: Order of sorting
  *       - in: query
- *         name: name
+ *         name: description
  *         schema:
  *           type: string
- *         description: Filter by name
- *       - in: query
- *         name: costMin
- *         schema:
- *           type: number
- *         description: Minimum cost filter
+ *         description: Filter by description
  *     responses:
  *       200:
  *         description: Expense details or a list of expenses
@@ -76,19 +72,22 @@ const prisma = new PrismaClient();
  *           schema:
  *             type: object
  *             properties:
- *               name:
- *                 type: string
- *               cost:
+ *               amount:
  *                 type: number
- *               costBy:
+ *               date:
  *                 type: string
- *               address:
+ *               description:
  *                 type: string
+ *               buildingId:
+ *                 type: integer
+ *               apartmentId:
+ *                 type: integer
  *             required:
- *               - name
- *               - cost
- *               - costBy
- *               - address
+ *               - amount
+ *               - date
+ *               - description
+ *               - buildingId
+ *               - apartmentId
  *     responses:
  *       201:
  *         description: Expense created
@@ -111,14 +110,16 @@ const prisma = new PrismaClient();
  *             properties:
  *               id:
  *                 type: integer
- *               name:
- *                 type: string
- *               cost:
+ *               amount:
  *                 type: number
- *               costBy:
+ *               date:
  *                 type: string
- *               address:
+ *               description:
  *                 type: string
+ *               buildingId:
+ *                 type: integer
+ *               apartmentId:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Expense updated

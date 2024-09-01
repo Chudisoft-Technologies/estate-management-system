@@ -3,6 +3,7 @@ import { PrismaClient, Rent } from '@prisma/client';
 import { authenticate } from '../auth/auth';
 
 const prisma = new PrismaClient();
+const allowedRoles = ['admin', 'user'];
 
 /**
  * @swagger
@@ -37,7 +38,7 @@ const prisma = new PrismaClient();
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (e.g., "name", "cost")
+ *         description: Field to sort by (e.g., "totalAmount", "startDate")
  *       - in: query
  *         name: order
  *         schema:
@@ -45,15 +46,15 @@ const prisma = new PrismaClient();
  *           enum: [asc, desc]
  *         description: Order of sorting
  *       - in: query
- *         name: name
+ *         name: startDate
  *         schema:
  *           type: string
- *         description: Filter by name
+ *         description: Filter by start date
  *       - in: query
- *         name: costMin
+ *         name: endDate
  *         schema:
- *           type: number
- *         description: Minimum cost filter
+ *           type: string
+ *         description: Filter by end date
  *     responses:
  *       200:
  *         description: Rent details or a list of rents
@@ -76,19 +77,25 @@ const prisma = new PrismaClient();
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               startDate:
  *                 type: string
- *               cost:
+ *               endDate:
+ *                 type: string
+ *               totalAmount:
  *                 type: number
- *               costBy:
- *                 type: string
- *               address:
+ *               depositAmount:
+ *                 type: number
+ *               apartmentId:
+ *                 type: integer
+ *               userId:
  *                 type: string
  *             required:
- *               - name
- *               - cost
- *               - costBy
- *               - address
+ *               - startDate
+ *               - endDate
+ *               - totalAmount
+ *               - depositAmount
+ *               - apartmentId
+ *               - userId
  *     responses:
  *       201:
  *         description: Rent created
@@ -111,13 +118,17 @@ const prisma = new PrismaClient();
  *             properties:
  *               id:
  *                 type: integer
- *               name:
+ *               startDate:
  *                 type: string
- *               cost:
+ *               endDate:
+ *                 type: string
+ *               totalAmount:
  *                 type: number
- *               costBy:
- *                 type: string
- *               address:
+ *               depositAmount:
+ *                 type: number
+ *               apartmentId:
+ *                 type: integer
+ *               userId:
  *                 type: string
  *     responses:
  *       200:
@@ -129,7 +140,7 @@ const prisma = new PrismaClient();
  *   delete:
  *     tags:
  *       - Rents
- *     summary: Delete an rent
+ *     summary: Delete a rent
  *     security:
  *       - bearerAuth: []
  *     parameters:
