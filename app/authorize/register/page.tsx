@@ -287,7 +287,7 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
-            <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
+            <LoadScript googleMapsApiKey="AIzaSyBdewWUxQBa3o_3jVuinYgpzexk8YZiDV8">
               <GoogleMap
                 center={mapCenter}
                 zoom={15}

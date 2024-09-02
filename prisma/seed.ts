@@ -14,11 +14,10 @@ async function main() {
     update: {},
     create: {
       email: "admin@chudisoft.com",
-      name: "Admin User",
+      fullName: "Admin User", // Change 'fullname' to 'fullName'
       password: hashedPassword,
       role: ROLES.ADMIN, // Use the constant here
-      firstName: "Admin",
-      lastName: "User",
+
       username: "adminuser",
       phone: "1234567890",
       contactAddress: "123 Admin St",
