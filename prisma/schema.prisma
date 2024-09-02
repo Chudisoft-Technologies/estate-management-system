@@ -4,6 +4,9 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+
+
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -22,16 +25,17 @@ model SocialMediaHandles {
   whatsapp String?
   owner     User?
 }
+
+
+
+
 model User {
   id                 String      @id @default(cuid())
   email              String      @unique
-  name               String?
+  fullName           String      // Replaced name with fullName
   image              String?
-  firstName          String
-  middleName         String?
-  lastName           String
   username           String      @unique
-  role               String      @default("guest")  // Manager, Tenant, Guest, Admin, Staff, Cashier
+  role               String      @default("GUEST")  // Use a string for roles
   phone              String
   password           String
   contactAddress     String
@@ -57,6 +61,8 @@ model User {
   Rents              Rent[]
   Payments           Payment[]
 }
+
+
 
 model Building {
   id          Int        @id @default(autoincrement())

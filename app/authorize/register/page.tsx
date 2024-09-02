@@ -1,34 +1,45 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { CountryDropdown, RegionDropdown } from 'react-country-region-selector';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faUser, faPhone, faEye, faEyeSlash, faGlobe, faMapMarkerAlt, faAddressCard, faBriefcase } from '@fortawesome/free-solid-svg-icons';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { CountryDropdown, RegionDropdown } from "react-country-region-selector";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faEnvelope,
+  faLock,
+  faUser,
+  faPhone,
+  faEye,
+  faEyeSlash,
+  faGlobe,
+  faMapMarkerAlt,
+  faAddressCard,
+  faBriefcase,
+} from "@fortawesome/free-solid-svg-icons";
 
 const RegisterPage = () => {
   // Personal Details
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('');
-  const [occupation, setOccupation] = useState('');
+  const [fullname, setFullname] = useState("");
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
+  const [occupation, setOccupation] = useState("");
 
   // Address Details
-  const [contactAddress, setContactAddress] = useState('');
-  const [state, setState] = useState('');
-  const [lga, setLga] = useState('');
-  const [country, setCountry] = useState('');
+  const [contactAddress, setContactAddress] = useState("");
+  const [state, setState] = useState("");
+  const [lga, setLga] = useState("");
+  const [country, setCountry] = useState("");
   const [mapCenter, setMapCenter] = useState({ lat: 0, lng: 0 });
 
   // Form state
-  const [currentSection, setCurrentSection] = useState<'personal' | 'address'>('personal');
-  const [error, setError] = useState('');
+  const [currentSection, setCurrentSection] = useState<"personal" | "address">(
+    "personal"
+  );
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
@@ -47,23 +58,21 @@ const RegisterPage = () => {
   const handlePersonalDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Perform validation if needed
-    setCurrentSection('address');
+    setCurrentSection("address");
   };
 
   const handleAddressDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch('/api/v1/users', {
-      method: 'POST',
+    const res = await fetch("/api/v1/users", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         email,
         password,
-        firstName,
-        middleName,
-        lastName,
+        fullname,
         username,
         phone,
         occupation,
@@ -77,9 +86,9 @@ const RegisterPage = () => {
     const data = await res.json();
 
     if (res.ok) {
-      router.push('/login');
+      router.push("/login");
     } else {
-      setError(data.error || 'An error occurred');
+      setError(data.error || "An error occurred");
     }
   };
 
@@ -88,53 +97,36 @@ const RegisterPage = () => {
       <div className="w-full max-w-md p-8 m-4 bg-gray-100 text-gray-700 shadow-md rounded-lg">
         <h1 className="text-2xl font-bold mb-4">Register</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
-        {currentSection === 'personal' ? (
+        {currentSection === "personal" ? (
           <form onSubmit={handlePersonalDetailsSubmit}>
             <div className="mb-4 relative">
-              <label htmlFor="firstName" className="block text-gray-700">First Name</label>
+              <label htmlFor="fullname" className="block text-gray-700">
+                Full Name
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
-                  id="firstName"
+                  id="fullname"
                   className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value)}
                   required
                 />
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="middleName" className="block text-gray-700">Middle Name</label>
+              <label htmlFor="username" className="block text-gray-700">
+                Username
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  id="middleName"
-                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                  value={middleName}
-                  onChange={(e) => setMiddleName(e.target.value)}
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 />
-              </div>
-            </div>
-            <div className="mb-4 relative">
-              <label htmlFor="lastName" className="block text-gray-700">Last Name</label>
-              <div className="relative">
-                <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  id="lastName"
-                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="mb-4 relative">
-              <label htmlFor="username" className="block text-gray-700">Username</label>
-              <div className="relative">
-                <FontAwesomeIcon icon={faUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   id="username"
@@ -146,9 +138,14 @@ const RegisterPage = () => {
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="email" className="block text-gray-700">Email</label>
+              <label htmlFor="email" className="block text-gray-700">
+                Email
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faEnvelope}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="email"
                   id="email"
@@ -160,9 +157,14 @@ const RegisterPage = () => {
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="password" className="block text-gray-700">Password</label>
+              <label htmlFor="password" className="block text-gray-700">
+                Password
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faLock}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
@@ -181,9 +183,14 @@ const RegisterPage = () => {
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="phone" className="block text-gray-700">Phone</label>
+              <label htmlFor="phone" className="block text-gray-700">
+                Phone
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faPhone} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faPhone}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   id="phone"
@@ -195,9 +202,14 @@ const RegisterPage = () => {
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="occupation" className="block text-gray-700">Occupation</label>
+              <label htmlFor="occupation" className="block text-gray-700">
+                Occupation
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faBriefcase} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faBriefcase}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   id="occupation"
@@ -207,16 +219,24 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
-            <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+            >
               Next
             </button>
           </form>
         ) : (
           <form onSubmit={handleAddressDetailsSubmit}>
             <div className="mb-4 relative">
-              <label htmlFor="contactAddress" className="block text-gray-700">Contact Address</label>
+              <label htmlFor="contactAddress" className="block text-gray-700">
+                Contact Address
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faMapMarkerAlt} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faMapMarkerAlt}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   id="contactAddress"
@@ -228,7 +248,9 @@ const RegisterPage = () => {
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="country" className="block text-gray-700">Country</label>
+              <label htmlFor="country" className="block text-gray-700">
+                Country
+              </label>
               <CountryDropdown
                 value={country}
                 onChange={(val) => setCountry(val)}
@@ -236,7 +258,9 @@ const RegisterPage = () => {
               />
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="state" className="block text-gray-700">State</label>
+              <label htmlFor="state" className="block text-gray-700">
+                State
+              </label>
               <RegionDropdown
                 country={country}
                 value={state}
@@ -245,9 +269,14 @@ const RegisterPage = () => {
               />
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="lga" className="block text-gray-700">LGA</label>
+              <label htmlFor="lga" className="block text-gray-700">
+                LGA
+              </label>
               <div className="relative">
-                <FontAwesomeIcon icon={faGlobe} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FontAwesomeIcon
+                  icon={faGlobe}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   id="lga"
@@ -265,10 +294,17 @@ const RegisterPage = () => {
                 mapContainerStyle={{ height: "400px", width: "100%" }}
                 onClick={(e) => handleMarkerDragEnd(e)}
               >
-                <Marker position={mapCenter} draggable onDragEnd={handleMarkerDragEnd} />
+                <Marker
+                  position={mapCenter}
+                  draggable
+                  onDragEnd={handleMarkerDragEnd}
+                />
               </GoogleMap>
             </LoadScript>
-            <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+            >
               Submit
             </button>
           </form>

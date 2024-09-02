@@ -1,15 +1,21 @@
-"use client"; 
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faEnvelope,
+  faLock,
+  faEye,
+  faEyeSlash,
+} from "@fortawesome/free-solid-svg-icons";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleTogglePassword = () => {
@@ -19,10 +25,10 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch('/api/v1/auth/login', {
-      method: 'POST',
+    const res = await fetch("/api/v1/auth/login", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
     });
@@ -31,10 +37,10 @@ const LoginPage = () => {
 
     if (res.ok) {
       // Cache the token in local storage
-      localStorage.setItem('token', data.token);
-      router.push('/dashboard'); // Redirect to a protected page
+      localStorage.setItem("token", data.token);
+      router.push("/dashboard"); // Redirect to a protected page
     } else {
-      setError(data.error || 'An error occurred');
+      setError(data.error || "An error occurred");
     }
   };
 
@@ -45,9 +51,14 @@ const LoginPage = () => {
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4 relative">
-            <label htmlFor="email" className="block text-gray-700">Email</label>
+            <label htmlFor="email" className="block text-gray-700">
+              Email
+            </label>
             <div className="flex items-center">
-              <FontAwesomeIcon icon={faEnvelope} className="absolute ml-2 text-gray-400" />
+              <FontAwesomeIcon
+                icon={faEnvelope}
+                className="absolute ml-2 text-gray-400"
+              />
               <input
                 type="email"
                 id="email"
@@ -59,11 +70,16 @@ const LoginPage = () => {
             </div>
           </div>
           <div className="mb-6 relative">
-            <label htmlFor="password" className="block text-gray-700">Password</label>
+            <label htmlFor="password" className="block text-gray-700">
+              Password
+            </label>
             <div className="flex items-center">
-              <FontAwesomeIcon icon={faLock} className="absolute ml-2 text-gray-400" />
+              <FontAwesomeIcon
+                icon={faLock}
+                className="absolute ml-2 text-gray-400"
+              />
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
                 value={password}
@@ -87,8 +103,10 @@ const LoginPage = () => {
           </button>
         </form>
         <p className="mt-4 text-center">
-          Don&apos;t have an account?{' '}
-          <a href="/register" className="text-blue-500 hover:underline">Register</a>
+          Don&apos;t have an account?{" "}
+          <Link href="register" className="text-blue-500 hover:underline">
+            Register
+          </Link>
         </p>
       </div>
     </div>
