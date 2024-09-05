@@ -32,7 +32,7 @@ model SocialMediaHandles {
 model User {
   id                 String      @id @default(cuid())
   email              String      @unique
-  fullName           String      // Replaced name with fullName|| (make it a calculated variable from lname, fname, mname)
+  fullName           String?      // Replaced name with fullName|| (make it a calculated variable from lname, fname, mname)
   firstName          String      // Added first name
   middleName         String?     // Optional middle name
   lastName           String      // Added last name

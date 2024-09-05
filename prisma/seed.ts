@@ -14,7 +14,8 @@ async function main() {
     update: {},
     create: {
       email: "admin@chudisoft.com",
-      fullName: "Admin User", // Change 'fullname' to 'fullName'
+      firstName: "Admin", // Split fullName into firstName and lastName
+      lastName: "User", // Add lastName
       password: hashedPassword,
       role: ROLES.ADMIN, // Use the constant here
 

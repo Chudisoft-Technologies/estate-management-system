@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
   const token = await authenticate(request, [ROLES.ADMIN]);
 
   const data = await request.json();
-  var role = token === null ? ROLES.USER : data.role;
+  let role = token === null ? ROLES.USER : data.role;
 
   if (!data.email || !data.password) {
     return NextResponse.json(
