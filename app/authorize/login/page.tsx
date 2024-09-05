@@ -38,7 +38,7 @@ const LoginPage = () => {
     if (res.ok) {
       // Cache the token in local storage
       localStorage.setItem("token", data.token);
-      router.push("/dashboard"); // Redirect to a protected page
+      router.push("authorize/dashboard"); // Redirect to a protected page
     } else {
       setError(data.error || "An error occurred");
     }
