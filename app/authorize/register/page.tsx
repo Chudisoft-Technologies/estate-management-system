@@ -23,7 +23,9 @@ const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [fullname, setFullname] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [middleName, setMiddleName] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [occupation, setOccupation] = useState("");
@@ -72,7 +74,9 @@ const RegisterPage = () => {
       body: JSON.stringify({
         email,
         password,
-        fullname,
+        firstName,
+        middleName,
+        lastName,
         username,
         phone,
         occupation,
@@ -100,8 +104,8 @@ const RegisterPage = () => {
         {currentSection === "personal" ? (
           <form onSubmit={handlePersonalDetailsSubmit}>
             <div className="mb-4 relative">
-              <label htmlFor="fullname" className="block text-gray-700">
-                Full Name
+              <label htmlFor="firstName" className="block text-gray-700">
+                First Name
               </label>
               <div className="relative">
                 <FontAwesomeIcon
@@ -110,10 +114,47 @@ const RegisterPage = () => {
                 />
                 <input
                   type="text"
-                  id="fullname"
+                  id="firstName"
                   className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                  value={fullname}
-                  onChange={(e) => setFullname(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="mb-4 relative">
+              <label htmlFor="middleName" className="block text-gray-700">
+                Middle Name
+              </label>
+              <div className="relative">
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  id="middleName"
+                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
+                  value={middleName}
+                  onChange={(e) => setMiddleName(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="mb-4 relative">
+              <label htmlFor="lastName" className="block text-gray-700">
+                Last Name
+              </label>
+              <div className="relative">
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  id="lastName"
+                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   required
                 />
               </div>
@@ -287,7 +328,7 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
-            <LoadScript googleMapsApiKey="AIzaSyBdewWUxQBa3o_3jVuinYgpzexk8YZiDV8">
+            <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
               <GoogleMap
                 center={mapCenter}
                 zoom={15}

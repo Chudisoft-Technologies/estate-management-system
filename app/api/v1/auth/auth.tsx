@@ -8,7 +8,7 @@ export async function authenticate(
   request: NextRequest,
   allowedRoles: string[] = []
 ) {
-    // const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  // const token = request.headers.get('Authorization')?.replace('Bearer ', '');
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
