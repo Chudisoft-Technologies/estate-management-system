@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchPayments } from '../../store/paymentSlice'; // Ensure you have this slice
-import { AppDispatch, RootState } from '../../store';
-import PaymentCard from './PaymentCard'; // Ensure you have this component
-import Pagination from '../../Pagination';
-import { saveAs } from 'file-saver';
-import { CSVLink } from 'react-csv';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { Payment } from '@prisma/client';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPayments } from "../../store/paymentSlice"; // Ensure you have this slice
+import { AppDispatch, RootState } from "../../store";
+import PaymentCard from "./PaymentCard"; // Ensure you have this component
+import Pagination from "../../Pagination";
+import { saveAs } from "file-saver";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { Payment } from "@prisma/client";
 
-declare module 'jspdf' {
+declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
@@ -18,11 +19,13 @@ declare module 'jspdf' {
 
 const PaymentList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { payments, status, error } = useSelector((state: RootState) => state.payments);
+  const { payments, status, error } = useSelector(
+    (state: RootState) => state.payments
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     dispatch(fetchPayments());
@@ -32,29 +35,40 @@ const PaymentList: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof typeof payments[0]) => {
-    const order = sortOrder === 'asc' ? 'desc' : 'asc';
+  const handleSort = (column: keyof (typeof payments)[0]) => {
+    const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
   const filteredPayments = payments
-    .filter((payment: Payment) => payment.reference.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((payment: Payment) =>
+      payment.reference.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     .sort((a, b) =>
-      sortOrder === 'asc' ? a.reference.localeCompare(b.reference) : b.reference.localeCompare(a.reference)
+      sortOrder === "asc"
+        ? a.reference.localeCompare(b.reference)
+        : b.reference.localeCompare(a.reference)
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPayments = filteredPayments.slice(indexOfFirstItem, indexOfLastItem);
+  const currentPayments = filteredPayments.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [['Reference', 'Amount', 'Status']],
-      body: payments.map((payment: Payment) => [payment.reference, payment.amount, payment.status]),
+      head: [["Reference", "Amount", "Status"]],
+      body: payments.map((payment: Payment) => [
+        payment.reference,
+        payment.amount,
+        payment.status,
+      ]),
     });
-    doc.save('payments.pdf');
+    doc.save("payments.pdf");
   };
 
   const exportToExcel = () => {
@@ -63,14 +77,16 @@ const PaymentList: React.FC = () => {
       Amount: payment.amount,
       Status: payment.status,
     }));
-  
+
     const csvRows = [
-      Object.keys(csvData[0]).join(','), // headers
-      ...csvData.map(row => Object.values(row).join(',')) // rows
+      Object.keys(csvData[0]).join(","), // headers
+      ...csvData.map((row) => Object.values(row).join(",")), // rows
     ];
-  
-    const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    saveAs(csvBlob, 'payments.csv');
+
+    const csvBlob = new Blob([csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "payments.csv");
   };
 
   const onEdit = (id: number) => {
@@ -92,7 +108,11 @@ const PaymentList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink data={payments} filename={'payments.csv'} className="btn btn-primary">
+          <CSVLink
+            data={payments}
+            filename={"payments.csv"}
+            className="btn btn-primary"
+          >
             Export to CSV
           </CSVLink>
           <button onClick={exportToPDF} className="btn btn-primary">

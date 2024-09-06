@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchApartments } from '../../store/apartmentSlice';
-import { fetchUsers } from '../../store/userSlice';
-import { AppDispatch, RootState } from '../../store/index';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchApartments } from "../../store/apartmentSlice";
+import { fetchUsers } from "../../store/userSlice";
+import { AppDispatch, RootState } from "../../store/index";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface RentFormProps {
   rentId?: number; // Optional ID for editing
@@ -17,9 +19,11 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
   const [totalAmount, setTotalAmount] = useState(0);
   const [apartmentId, setApartmentId] = useState<number | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  const apartments = useSelector((state: RootState) => state.apartments.apartments);
+  const apartments = useSelector(
+    (state: RootState) => state.apartments.apartments
+  );
   const tenants = useSelector((state: RootState) => state.users.tenants);
   const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
@@ -39,7 +43,7 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
           setApartmentId(data.apartmentId);
           setTenantId(data.tenantId);
         })
-        .catch((error) => setError('Failed to load rent details'));
+        .catch((error) => setError("Failed to load rent details"));
     }
   }, [rentId, dispatch]);
 
@@ -47,7 +51,7 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
     e.preventDefault();
 
     if (!startDate || !endDate) {
-      setError('Start Date and End Date are required');
+      setError("Start Date and End Date are required");
       return;
     }
 
@@ -59,17 +63,17 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
     twoYearsFromNow.setFullYear(now.getFullYear() + 2);
 
     if (startDate < twoYearsAgo) {
-      setError('Start Date cannot be more than 2 years in the past');
+      setError("Start Date cannot be more than 2 years in the past");
       return;
     }
 
     if (endDate <= startDate) {
-      setError('End Date must be after the Start Date');
+      setError("End Date must be after the Start Date");
       return;
     }
 
     if (endDate > twoYearsFromNow) {
-      setError('End Date cannot be more than 2 years in the future');
+      setError("End Date cannot be more than 2 years in the future");
       return;
     }
 
@@ -81,33 +85,37 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
       tenantId,
     };
 
-    const url = rentId ? `/api/v1/rents/${rentId}` : '/api/v1/rents';
-    const method = rentId ? 'PUT' : 'POST';
+    const url = rentId ? `/api/v1/rents/${rentId}` : "/api/v1/rents";
+    const method = rentId ? "PUT" : "POST";
 
     const res = await fetch(url, {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(rentData),
     });
 
     if (res.ok) {
-      router.push('/rents');
+      router.push("/rents");
     } else {
       const data = await res.json();
-      setError(data.error || 'Failed to save rent');
+      setError(data.error || "Failed to save rent");
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md p-8 bg-gray-100 text-gray-700 shadow-md rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">{rentId ? 'Edit Rent' : 'Add Rent'}</h1>
+        <h1 className="text-2xl font-bold mb-4">
+          {rentId ? "Edit Rent" : "Add Rent"}
+        </h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="startDate" className="block text-gray-700">Start Date</label>
+            <label htmlFor="startDate" className="block text-gray-700">
+              Start Date
+            </label>
             <DatePicker
               id="startDate"
               selected={startDate}
@@ -122,7 +130,9 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="endDate" className="block text-gray-700">End Date</label>
+            <label htmlFor="endDate" className="block text-gray-700">
+              End Date
+            </label>
             <DatePicker
               id="endDate"
               selected={endDate}
@@ -131,14 +141,18 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
               startDate={startDate}
               endDate={endDate}
               minDate={startDate}
-              maxDate={new Date(new Date().setFullYear(new Date().getFullYear() + 2))}
+              maxDate={
+                new Date(new Date().setFullYear(new Date().getFullYear() + 2))
+              }
               className="mt-1 p-2 border border-gray-300 rounded w-full"
               placeholderText="Select end date"
               required
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="totalAmount" className="block text-gray-700">Total Amount</label>
+            <label htmlFor="totalAmount" className="block text-gray-700">
+              Total Amount
+            </label>
             <input
               type="number"
               id="totalAmount"
@@ -149,14 +163,16 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="apartment" className="block text-gray-700">Apartment</label>
+            <label htmlFor="apartment" className="block text-gray-700">
+              Apartment
+            </label>
             <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
               {apartments.map((apartment) => (
                 <div
                   key={apartment.id}
                   onClick={() => setApartmentId(apartment.id)}
                   className={`cursor-pointer p-2 rounded ${
-                    apartmentId === apartment.id ? 'bg-green-200' : 'bg-white'
+                    apartmentId === apartment.id ? "bg-green-200" : "bg-white"
                   }`}
                 >
                   {/* <img
@@ -171,15 +187,19 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
             </div>
           </div>
           <div className="mb-4">
-            <label htmlFor="tenant" className="block text-gray-700">Tenant</label>
+            <label htmlFor="tenant" className="block text-gray-700">
+              Tenant
+            </label>
             <select
               id="tenant"
               className="mt-1 p-2 border border-gray-300 rounded w-full"
-              value={tenantId || ''}
+              value={tenantId || ""}
               onChange={(e) => setTenantId(e.target.value)}
               required
             >
-              <option value="" disabled>Select a tenant</option>
+              <option value="" disabled>
+                Select a tenant
+              </option>
               {tenants.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.name} | {tenant.phone}
@@ -191,7 +211,7 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
           >
-            {rentId ? 'Update Rent' : 'Add Rent'}
+            {rentId ? "Update Rent" : "Add Rent"}
           </button>
         </form>
       </div>

@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
 import Image from "next/image";
-import Head from 'next/head';
-
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import Head from "next/head";
+import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLock, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 
 const Welcome: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = [
-    '/images/background1.jpg',
-    '/images/background2.jpg',
-    '/images/background3.jpg',
+    "/images/background1.jpg",
+    "/images/background2.jpg",
+    "/images/background3.jpg",
   ];
 
   const handleNextImage = () => {
@@ -24,7 +24,7 @@ const Welcome: React.FC = () => {
       (prevIndex) => (prevIndex - 1 + images.length) % images.length
     );
   };
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       handleNextImage();
@@ -42,10 +42,10 @@ const Welcome: React.FC = () => {
             <div
               key={index}
               className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                index === currentImageIndex ? "opacity-100" : "opacity-0"
               }`}
               style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.5)', // Black background with 50% transparency
+                backgroundColor: "rgba(0, 0, 0, 0.5)", // Black background with 50% transparency
               }}
             >
               <Image
@@ -61,27 +61,35 @@ const Welcome: React.FC = () => {
         </div>
 
         {/* Text Container with Semi-Transparent Background */}
-        <div
-          className="ml-4 me-4"
-        >
+        <div className="ml-4 me-4">
           <div
             className="relative z-10 bg-white bg-opacity-20 backdrop-blur-sm p-8 rounded-lg max-w-lg mx-auto"
-            style={{ backgroundColor: 'rgba(48, 48, 48, 0.59)' }} // dark background with 40% transparency
+            style={{ backgroundColor: "rgba(48, 48, 48, 0.59)" }} // dark background with 40% transparency
           >
             <h4 className="font-bold">Chudisoft Technologies Presents</h4>
-            <h1 className="text-3xl font-bold text-amber-100">Estate Management System</h1>
-            <p className="mt-4 text-lg">Your trusted partner in innovative software solutions.</p>
+            <h1 className="text-3xl font-bold text-amber-100">
+              Estate Management System
+            </h1>
+            <p className="mt-4 text-lg">
+              Your trusted partner in innovative software solutions.
+            </p>
 
             {/* Login and Registration Buttons */}
             <div className="flex justify-center space-x-4 mt-4">
-              <a href='/authorize' className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+              <Link
+                href="/authorize/login"
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
+              >
                 <FontAwesomeIcon icon={faLock} className="mr-2" />
                 Login
-              </a>
-              <a href='/authorize/register' className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center">
+              </Link>
+              <Link
+                href="/authorize/register"
+                className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center"
+              >
                 <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
                 Register
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -106,8 +114,7 @@ const Welcome: React.FC = () => {
       {/* Other sections like About, Services, Features, Contact, Footer */}
       {/* ... */}
     </div>
-
   );
-}
+};
 
 export default Welcome;

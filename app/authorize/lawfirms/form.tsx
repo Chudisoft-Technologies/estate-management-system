@@ -1,25 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { useRouter } from 'next/router';
-import { RootState } from '../../store';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBuilding, faEnvelope, faPhone, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+"use client";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
+import { RootState } from "../../store";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBuilding,
+  faEnvelope,
+  faPhone,
+  faMapMarkerAlt,
+} from "@fortawesome/free-solid-svg-icons";
 
 const LawFirmForm: React.FC = () => {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
   const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login');
-    } else if (user?.role !== 'admin' && user?.role !== 'manager') {
-      router.push('/unauthorized');
+      router.push("/login");
+    } else if (user?.role !== "admin" && user?.role !== "manager") {
+      router.push("/unauthorized");
     }
   }, [isAuthenticated, user, router]);
 
@@ -27,30 +35,33 @@ const LawFirmForm: React.FC = () => {
     e.preventDefault();
 
     if (!name || !email || !phone || !address) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
     try {
-      const response = await fetch('/api/law-firms', {
-        method: 'POST',
+      const response = await fetch("/api/law-firms", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ name, email, phone, address }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save law firm details');
+        throw new Error("Failed to save law firm details");
       }
 
-      router.push('/law-firms');
+      router.push("/law-firms");
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  if (!isAuthenticated || user?.role !== 'admin' && user?.role !== 'manager') {
+  if (
+    !isAuthenticated ||
+    (user?.role !== "admin" && user?.role !== "manager")
+  ) {
     return null; // Or you could return a loading spinner
   }
 
@@ -60,7 +71,10 @@ const LawFirmForm: React.FC = () => {
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="mb-4 relative">
-          <FontAwesomeIcon icon={faBuilding} className="absolute left-3 top-3 text-gray-400" />
+          <FontAwesomeIcon
+            icon={faBuilding}
+            className="absolute left-3 top-3 text-gray-400"
+          />
           <input
             type="text"
             placeholder="Name"
@@ -70,7 +84,10 @@ const LawFirmForm: React.FC = () => {
           />
         </div>
         <div className="mb-4 relative">
-          <FontAwesomeIcon icon={faEnvelope} className="absolute left-3 top-3 text-gray-400" />
+          <FontAwesomeIcon
+            icon={faEnvelope}
+            className="absolute left-3 top-3 text-gray-400"
+          />
           <input
             type="email"
             placeholder="Email"
@@ -80,7 +97,10 @@ const LawFirmForm: React.FC = () => {
           />
         </div>
         <div className="mb-4 relative">
-          <FontAwesomeIcon icon={faPhone} className="absolute left-3 top-3 text-gray-400" />
+          <FontAwesomeIcon
+            icon={faPhone}
+            className="absolute left-3 top-3 text-gray-400"
+          />
           <input
             type="text"
             placeholder="Phone"
@@ -90,7 +110,10 @@ const LawFirmForm: React.FC = () => {
           />
         </div>
         <div className="mb-4 relative">
-          <FontAwesomeIcon icon={faMapMarkerAlt} className="absolute left-3 top-3 text-gray-400" />
+          <FontAwesomeIcon
+            icon={faMapMarkerAlt}
+            className="absolute left-3 top-3 text-gray-400"
+          />
           <input
             type="text"
             placeholder="Address"

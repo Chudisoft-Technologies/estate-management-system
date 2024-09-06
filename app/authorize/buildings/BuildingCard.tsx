@@ -1,10 +1,16 @@
-import React from 'react';
-import { Building } from '@prisma/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBuilding, faMapMarkerAlt, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
-import { deleteBuilding } from '../../store/buildingSlice';
-import { AppDispatch } from '../../store/index';
+"use client";
+import React from "react";
+import { Building } from "@prisma/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBuilding,
+  faMapMarkerAlt,
+  faEdit,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { deleteBuilding } from "../../store/buildingSlice";
+import { AppDispatch } from "../../store/index";
 
 interface BuildingCardProps {
   building: Building;
@@ -12,8 +18,12 @@ interface BuildingCardProps {
   onDelete: (id: number) => void;
 }
 
-const BuildingCard: React.FC<BuildingCardProps> = ({ building, onEdit, onDelete }) => {
-    const dispatch: AppDispatch = useDispatch();
+const BuildingCard: React.FC<BuildingCardProps> = ({
+  building,
+  onEdit,
+  onDelete,
+}) => {
+  const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
     dispatch(deleteBuilding(building.id.toString()));

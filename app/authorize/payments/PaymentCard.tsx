@@ -1,10 +1,16 @@
-import React from 'react';
-import { Payment } from '@prisma/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCreditCard, faDollarSign, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
-import { deletePayment } from '../../store/paymentSlice';
-import { AppDispatch } from '../../store/index';
+"use client";
+import React from "react";
+import { Payment } from "@prisma/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCreditCard,
+  faDollarSign,
+  faEdit,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { deletePayment } from "../../store/paymentSlice";
+import { AppDispatch } from "../../store/index";
 
 interface PaymentCardProps {
   payment: Payment;
@@ -12,8 +18,12 @@ interface PaymentCardProps {
   onDelete: (id: number) => void;
 }
 
-const PaymentCard: React.FC<PaymentCardProps> = ({ payment, onEdit, onDelete }) => {
-    const dispatch: AppDispatch = useDispatch();
+const PaymentCard: React.FC<PaymentCardProps> = ({
+  payment,
+  onEdit,
+  onDelete,
+}) => {
+  const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
     dispatch(deletePayment(payment.id.toString()));

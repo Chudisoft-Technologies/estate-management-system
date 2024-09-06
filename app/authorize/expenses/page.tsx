@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchExpenses } from '../../store/expenseSlice'; // Ensure you have this slice
-import { AppDispatch, RootState } from '../../store';
-import ExpenseCard from './ExpenseCard'; // Ensure you have this component
-import Pagination from '../../Pagination';
-import { saveAs } from 'file-saver';
-import { CSVLink } from 'react-csv';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { Expense } from '@prisma/client';
+"use client";
 
-declare module 'jspdf' {
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchExpenses } from "../../store/expenseSlice"; // Ensure you have this slice
+import { AppDispatch, RootState } from "../../store";
+import ExpenseCard from "./ExpenseCard"; // Ensure you have this component
+import Pagination from "../../Pagination";
+import { saveAs } from "file-saver";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { Expense } from "@prisma/client";
+
+declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
@@ -18,11 +20,13 @@ declare module 'jspdf' {
 
 const ExpenseList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { expenses, status, error } = useSelector((state: RootState) => state.expenses);
+  const { expenses, status, error } = useSelector(
+    (state: RootState) => state.expenses
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     dispatch(fetchExpenses());
@@ -32,29 +36,41 @@ const ExpenseList: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof typeof expenses[0]) => {
-    const order = sortOrder === 'asc' ? 'desc' : 'asc';
+  const handleSort = (column: keyof (typeof expenses)[0]) => {
+    const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
   const filteredExpenses = expenses
-    .filter((expense: Expense) => expense.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((expense: Expense) =>
+      expense.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     .sort((a, b) =>
-      sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentExpenses = filteredExpenses.slice(indexOfFirstItem, indexOfLastItem);
+  const currentExpenses = filteredExpenses.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [['Name', 'Amount', 'Category', 'Date']],
-      body: expenses.map((expense: Expense) => [expense.name, expense.amount, expense.category, expense.date]),
+      head: [["Name", "Amount", "Category", "Date"]],
+      body: expenses.map((expense: Expense) => [
+        expense.name,
+        expense.amount,
+        expense.category,
+        expense.date,
+      ]),
     });
-    doc.save('expenses.pdf');
+    doc.save("expenses.pdf");
   };
 
   const exportToExcel = () => {
@@ -64,14 +80,16 @@ const ExpenseList: React.FC = () => {
       Category: expense.category,
       Date: expense.date,
     }));
-  
+
     const csvRows = [
-      Object.keys(csvData[0]).join(','), // headers
-      ...csvData.map(row => Object.values(row).join(',')) // rows
+      Object.keys(csvData[0]).join(","), // headers
+      ...csvData.map((row) => Object.values(row).join(",")), // rows
     ];
-  
-    const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    saveAs(csvBlob, 'expenses.csv');
+
+    const csvBlob = new Blob([csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "expenses.csv");
   };
 
   const onEdit = (id: number) => {
@@ -93,7 +111,11 @@ const ExpenseList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink data={expenses} filename={'expenses.csv'} className="btn btn-primary">
+          <CSVLink
+            data={expenses}
+            filename={"expenses.csv"}
+            className="btn btn-primary"
+          >
             Export to CSV
           </CSVLink>
           <button onClick={exportToPDF} className="btn btn-primary">

@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchBookingStatuses } from '../../store/bookingStatusSlice'; // Ensure you have this slice
-import { AppDispatch, RootState } from '../../store';
-import BookingStatusCard from './BookingStatusCard'; // Ensure you have this component
-import Pagination from '../../Pagination';
-import { saveAs } from 'file-saver';
-import { CSVLink } from 'react-csv';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { BookingStatus } from '@prisma/client';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchBookingStatuses } from "../../store/bookingStatusSlice"; // Ensure you have this slice
+import { AppDispatch, RootState } from "../../store";
+import BookingStatusCard from "./BookingStatusCard"; // Ensure you have this component
+import Pagination from "../../Pagination";
+import { saveAs } from "file-saver";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { BookingStatus } from "@prisma/client";
 
-declare module 'jspdf' {
+declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
@@ -18,11 +19,13 @@ declare module 'jspdf' {
 
 const BookingStatusList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { bookingStatuses, status, error } = useSelector((state: RootState) => state.bookingStatuses);
+  const { bookingStatuses, status, error } = useSelector(
+    (state: RootState) => state.bookingStatuses
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     dispatch(fetchBookingStatuses());
@@ -32,29 +35,39 @@ const BookingStatusList: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof typeof bookingStatuses[0]) => {
-    const order = sortOrder === 'asc' ? 'desc' : 'asc';
+  const handleSort = (column: keyof (typeof bookingStatuses)[0]) => {
+    const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
   const filteredBookingStatuses = bookingStatuses
-    .filter((status: BookingStatus) => status.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((status: BookingStatus) =>
+      status.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     .sort((a, b) =>
-      sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBookingStatuses = filteredBookingStatuses.slice(indexOfFirstItem, indexOfLastItem);
+  const currentBookingStatuses = filteredBookingStatuses.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [['Name', 'Description']],
-      body: bookingStatuses.map((status: BookingStatus) => [status.name, status.description]),
+      head: [["Name", "Description"]],
+      body: bookingStatuses.map((status: BookingStatus) => [
+        status.name,
+        status.description,
+      ]),
     });
-    doc.save('booking_statuses.pdf');
+    doc.save("booking_statuses.pdf");
   };
 
   const exportToExcel = () => {
@@ -62,14 +75,16 @@ const BookingStatusList: React.FC = () => {
       Name: status.name,
       Description: status.description,
     }));
-  
+
     const csvRows = [
-      Object.keys(csvData[0]).join(','), // headers
-      ...csvData.map(row => Object.values(row).join(',')) // rows
+      Object.keys(csvData[0]).join(","), // headers
+      ...csvData.map((row) => Object.values(row).join(",")), // rows
     ];
-  
-    const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    saveAs(csvBlob, 'booking_statuses.csv');
+
+    const csvBlob = new Blob([csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "booking_statuses.csv");
   };
 
   const onEdit = (id: number) => {
@@ -91,7 +106,11 @@ const BookingStatusList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink data={bookingStatuses} filename={'booking_statuses.csv'} className="btn btn-primary">
+          <CSVLink
+            data={bookingStatuses}
+            filename={"booking_statuses.csv"}
+            className="btn btn-primary"
+          >
             Export to CSV
           </CSVLink>
           <button onClick={exportToPDF} className="btn btn-primary">

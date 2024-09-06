@@ -1,10 +1,16 @@
-import React from 'react';
-import { Expense } from '@prisma/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faReceipt, faMoneyCheckAlt, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
-import { deleteExpense } from '../../store/expenseSlice';
-import { AppDispatch } from '../../store/index';
+"use client";
+import React from "react";
+import { Expense } from "@prisma/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faReceipt,
+  faMoneyCheckAlt,
+  faEdit,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { deleteExpense } from "../../store/expenseSlice";
+import { AppDispatch } from "../../store/index";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -12,8 +18,12 @@ interface ExpenseCardProps {
   onDelete: (id: number) => void;
 }
 
-const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, onEdit, onDelete }) => {
-    const dispatch: AppDispatch = useDispatch();
+const ExpenseCard: React.FC<ExpenseCardProps> = ({
+  expense,
+  onEdit,
+  onDelete,
+}) => {
+  const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
     dispatch(deleteExpense(expense.id.toString()));
@@ -27,7 +37,10 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, onEdit, onDelete }) 
         {expense.name}
       </h3>
       <p className="text-gray-700 flex items-center mb-2">
-        <FontAwesomeIcon icon={faMoneyCheckAlt} className="mr-2 text-gray-600" />
+        <FontAwesomeIcon
+          icon={faMoneyCheckAlt}
+          className="mr-2 text-gray-600"
+        />
         Amount: ${expense.amount.toFixed(2)}
       </p>
       <div className="mt-4 flex justify-between">

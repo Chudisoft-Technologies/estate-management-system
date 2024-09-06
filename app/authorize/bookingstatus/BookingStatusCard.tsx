@@ -1,10 +1,12 @@
-import React from 'react';
-import { BookingStatus } from '@prisma/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTag, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
-import { deleteBookingStatus } from '../../store/bookingStatusSlice';
-import { AppDispatch } from '../../store/index';
+"use client";
+
+import React from "react";
+import { BookingStatus } from "@prisma/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTag, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { deleteBookingStatus } from "../../store/bookingStatusSlice";
+import { AppDispatch } from "../../store/index";
 
 interface BookingStatusCardProps {
   bookingStatus: BookingStatus;
@@ -12,8 +14,12 @@ interface BookingStatusCardProps {
   onDelete: (id: number) => void;
 }
 
-const BookingStatusCard: React.FC<BookingStatusCardProps> = ({ bookingStatus, onEdit, onDelete }) => {
-    const dispatch: AppDispatch = useDispatch();
+const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
+  bookingStatus,
+  onEdit,
+  onDelete,
+}) => {
+  const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
     dispatch(deleteBookingStatus(bookingStatus.id.toString()));

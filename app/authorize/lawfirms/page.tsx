@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchLawFirms } from '../../store/lawfirmSlice';
-import { AppDispatch, RootState } from '../../store';
-import LawFirmCard from './LawFirmCard';
-import Pagination from '../../Pagination';
-import { saveAs } from 'file-saver';
-import { CSVLink } from 'react-csv';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { LawFirm } from '@prisma/client';
+"use client";
 
-declare module 'jspdf' {
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchLawFirms } from "../../store/lawfirmSlice";
+import { AppDispatch, RootState } from "../../store";
+import LawFirmCard from "./LawFirmCard";
+import Pagination from "../../Pagination";
+import { saveAs } from "file-saver";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { LawFirm } from "@prisma/client";
+
+declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
@@ -18,11 +20,13 @@ declare module 'jspdf' {
 
 const LawFirmList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { lawfirms, status, error } = useSelector((state: RootState) => state.lawfirms);
+  const { lawfirms, status, error } = useSelector(
+    (state: RootState) => state.lawfirms
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     dispatch(fetchLawFirms());
@@ -32,29 +36,41 @@ const LawFirmList: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof typeof lawfirms[0]) => {
-    const order = sortOrder === 'asc' ? 'desc' : 'asc';
+  const handleSort = (column: keyof (typeof lawfirms)[0]) => {
+    const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
   const filteredLawFirms = lawfirms
-    .filter((firm: LawFirm) => firm.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((firm: LawFirm) =>
+      firm.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     .sort((a, b) =>
-      sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLawFirms = filteredLawFirms.slice(indexOfFirstItem, indexOfLastItem);
+  const currentLawFirms = filteredLawFirms.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [['Name', 'Address', 'Phone', 'Email']],
-      body: lawfirms.map((firm: LawFirm) => [firm.name, firm.address, firm.phone, firm.email]),
+      head: [["Name", "Address", "Phone", "Email"]],
+      body: lawfirms.map((firm: LawFirm) => [
+        firm.name,
+        firm.address,
+        firm.phone,
+        firm.email,
+      ]),
     });
-    doc.save('lawfirms.pdf');
+    doc.save("lawfirms.pdf");
   };
 
   const exportToExcel = () => {
@@ -64,8 +80,10 @@ const LawFirmList: React.FC = () => {
       Phone: firm.phone,
       Email: firm.email,
     }));
-    const csvBlob = new Blob([csvData.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    saveAs(csvBlob, 'lawfirms.csv');
+    const csvBlob = new Blob([csvData.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "lawfirms.csv");
   };
 
   return (
@@ -79,7 +97,11 @@ const LawFirmList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink data={lawfirms} filename={'lawfirms.csv'} className="btn btn-primary">
+          <CSVLink
+            data={lawfirms}
+            filename={"lawfirms.csv"}
+            className="btn btn-primary"
+          >
             Export to CSV
           </CSVLink>
           <button onClick={exportToPDF} className="btn btn-primary">

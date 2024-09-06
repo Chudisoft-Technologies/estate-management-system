@@ -1,10 +1,16 @@
-import React from 'react';
-import { Rent } from '@prisma/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollarSign, faCalendarAlt, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
-import { deleteRent } from '../../store/rentSlice';
-import { AppDispatch } from '../../store/index';
+"use client";
+import React from "react";
+import { Rent } from "@prisma/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDollarSign,
+  faCalendarAlt,
+  faEdit,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { deleteRent } from "../../store/rentSlice";
+import { AppDispatch } from "../../store/index";
 
 interface RentCardProps {
   rent: Rent;
@@ -13,7 +19,7 @@ interface RentCardProps {
 }
 
 const RentCard: React.FC<RentCardProps> = ({ rent, onEdit, onDelete }) => {
-    const dispatch: AppDispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
     dispatch(deleteRent(rent.id.toString()));

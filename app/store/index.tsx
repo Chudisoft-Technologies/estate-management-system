@@ -1,12 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './authSlice';
-import userReducer from './userSlice';
-import rentReducer from './rentSlice';
-import buildingReducer from './buildingSlice';
-import apartmentReducer from './apartmentSlice';
-import lawfirmReducer from './lawfirmSlice';
-import paymentReducer from './paymentSlice';
-import bookingStatusReducer from './bookingStatusSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./authSlice";
+import userReducer from "./userSlice";
+import rentReducer from "./rentSlice";
+import buildingReducer from "./buildingSlice";
+import apartmentReducer from "./apartmentSlice";
+import lawfirmReducer from "./lawfirmSlice";
+import paymentReducer from "./paymentSlice";
+import bookingStatusReducer from "./bookingStatusSlice";
 
 const store = configureStore({
   reducer: {

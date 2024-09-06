@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchBuildings } from '../../store/buildingSlice'; // Ensure you have this slice
-import { AppDispatch, RootState } from '../../store';
-import BuildingCard from './BuildingCard'; // Ensure you have this component
-import Pagination from '../../Pagination';
-import { saveAs } from 'file-saver';
-import { CSVLink } from 'react-csv';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { Building } from '@prisma/client';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchBuildings } from "../../store/buildingSlice"; // Ensure you have this slice
+import { AppDispatch, RootState } from "../../store";
+import BuildingCard from "./BuildingCard"; // Ensure you have this component
+import Pagination from "../../Pagination";
+import { saveAs } from "file-saver";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { Building } from "@prisma/client";
 
-declare module 'jspdf' {
+declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
@@ -18,11 +19,13 @@ declare module 'jspdf' {
 
 const BuildingList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { buildings, status, error } = useSelector((state: RootState) => state.buildings);
+  const { buildings, status, error } = useSelector(
+    (state: RootState) => state.buildings
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     dispatch(fetchBuildings());
@@ -32,45 +35,58 @@ const BuildingList: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof typeof buildings[0]) => {
-    const order = sortOrder === 'asc' ? 'desc' : 'asc';
+  const handleSort = (column: keyof (typeof buildings)[0]) => {
+    const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
   const filteredBuildings = buildings
-    .filter((building: Building) => building.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((building: Building) =>
+      building.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     .sort((a, b) =>
-      sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBuildings = filteredBuildings.slice(indexOfFirstItem, indexOfLastItem);
+  const currentBuildings = filteredBuildings.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [['Name', 'Address', 'Number of Floors']],
-      body: buildings.map((building: Building) => [building.name, building.address, building.numberOfFloors]),
+      head: [["Name", "Address", "Number of Floors"]],
+      body: buildings.map((building: Building) => [
+        building.name,
+        building.address,
+        building.numberOfFloors,
+      ]),
     });
-    doc.save('buildings.pdf');
+    doc.save("buildings.pdf");
   };
 
   const exportToExcel = () => {
     const csvData = buildings.map((building: Building) => ({
       Name: building.name,
       Address: building.address,
-      'Number of Floors': building.numberOfFloors,
+      "Number of Floors": building.numberOfFloors,
     }));
-  
+
     const csvRows = [
-      Object.keys(csvData[0]).join(','), // headers
-      ...csvData.map(row => Object.values(row).join(',')) // rows
+      Object.keys(csvData[0]).join(","), // headers
+      ...csvData.map((row) => Object.values(row).join(",")), // rows
     ];
-  
-    const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    saveAs(csvBlob, 'buildings.csv');
+
+    const csvBlob = new Blob([csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "buildings.csv");
   };
 
   const onEdit = (id: number) => {
@@ -92,7 +108,11 @@ const BuildingList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink data={buildings} filename={'buildings.csv'} className="btn btn-primary">
+          <CSVLink
+            data={buildings}
+            filename={"buildings.csv"}
+            className="btn btn-primary"
+          >
             Export to CSV
           </CSVLink>
           <button onClick={exportToPDF} className="btn btn-primary">
