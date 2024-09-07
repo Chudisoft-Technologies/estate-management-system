@@ -17,7 +17,7 @@ import {
   faAddressCard,
   faBriefcase,
 } from "@fortawesome/free-solid-svg-icons";
-
+import Link from "next/link";
 const RegisterPage = () => {
   // Personal Details
   const [email, setEmail] = useState("");
@@ -270,6 +270,15 @@ const RegisterPage = () => {
             >
               Next
             </button>
+            <p className="mt-4 text-center">
+              Already have an account?{" "}
+              <Link
+                href="/authorize/login"
+                className="text-blue-500 hover:underline"
+              >
+                Login
+              </Link>
+            </p>
           </form>
         ) : (
           <form onSubmit={handleAddressDetailsSubmit}>
@@ -352,6 +361,15 @@ const RegisterPage = () => {
             >
               Submit
             </button>
+            <p className="mt-4 text-center">
+              Already have an account?{" "}
+              <Link
+                href="/authorize/login"
+                className="text-blue-500 hover:underline"
+              >
+                Login
+              </Link>
+            </p>
           </form>
         )}
       </div>

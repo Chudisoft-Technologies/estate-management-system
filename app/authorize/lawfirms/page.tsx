@@ -27,9 +27,11 @@ const LawFirmList: React.FC = () => {
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [isClient, setIsClient] = useState(false); // New state to check client render
 
   useEffect(() => {
     dispatch(fetchLawFirms());
+    setIsClient(true); // Set to true when component is mounted (on client)
   }, [dispatch]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +89,7 @@ const LawFirmList: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 ">
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
@@ -97,13 +99,16 @@ const LawFirmList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink
-            data={lawfirms}
-            filename={"lawfirms.csv"}
-            className="btn btn-primary"
-          >
-            Export to CSV
-          </CSVLink>
+          {/* Only render CSVLink on the client to avoid mismatch */}
+          {isClient && (
+            <CSVLink
+              data={lawfirms}
+              filename={"lawfirms.csv"}
+              className="btn btn-primary"
+            >
+              Export to CSV
+            </CSVLink>
+          )}
           <button onClick={exportToPDF} className="btn btn-primary">
             Export to PDF
           </button>
@@ -112,6 +117,8 @@ const LawFirmList: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <h1>Hello</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {currentLawFirms.map((firm: LawFirm) => (
           <LawFirmCard key={firm.id} lawFirm={firm} />

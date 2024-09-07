@@ -38,7 +38,7 @@ const LoginPage = () => {
     if (res.ok) {
       // Cache the token in local storage
       localStorage.setItem("token", data.token);
-      router.push("authorize/dashboard"); // Redirect to a protected page
+      router.push("/authorize/dashboard"); // Redirect to a protected page
     } else {
       setError(data.error || "An error occurred");
     }
@@ -104,7 +104,10 @@ const LoginPage = () => {
         </form>
         <p className="mt-4 text-center">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-blue-500 hover:underline">
+          <Link
+            href="/authorize/register"
+            className="text-blue-500 hover:underline"
+          >
             Register
           </Link>
         </p>

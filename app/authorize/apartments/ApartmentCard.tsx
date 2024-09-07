@@ -1,10 +1,18 @@
-import React from 'react';
-import { Apartment } from '@prisma/client';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBuilding, faMapMarkerAlt, faMoneyBillWave, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
-import { deleteApartment } from '../../store/apartmentSlice';
-import { AppDispatch, RootState } from '../../store/index';
+"use client";
+
+import React from "react";
+import { Apartment } from "@prisma/client";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBuilding,
+  faMapMarkerAlt,
+  faMoneyBillWave,
+  faEdit,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { deleteApartment } from "../../store/apartmentSlice";
+import { AppDispatch, RootState } from "../../store/index";
 
 interface ApartmentCardProps {
   apartment: Apartment;
@@ -12,8 +20,12 @@ interface ApartmentCardProps {
   onDelete: (id: number) => void;
 }
 
-const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment, onEdit, onDelete }) => {
-    const dispatch: AppDispatch = useDispatch();
+const ApartmentCard: React.FC<ApartmentCardProps> = ({
+  apartment,
+  onEdit,
+  onDelete,
+}) => {
+  const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
     dispatch(deleteApartment(apartment.id.toString()));
@@ -31,7 +43,10 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({ apartment, onEdit, onDele
         {apartment.address}
       </p>
       <p className="text-gray-700 flex items-center mb-2">
-        <FontAwesomeIcon icon={faMoneyBillWave} className="mr-2 text-gray-600" />
+        <FontAwesomeIcon
+          icon={faMoneyBillWave}
+          className="mr-2 text-gray-600"
+        />
         Cost: ${apartment.cost.toFixed(2)}
       </p>
       <div className="mt-4 flex justify-between">
