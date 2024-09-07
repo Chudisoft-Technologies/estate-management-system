@@ -10,8 +10,12 @@ import {
   faEye,
   faEyeSlash,
 } from "@fortawesome/free-solid-svg-icons";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/app/store";
+import { login } from "@/app/store/authSlice";
 
 const LoginPage = () => {
+  const dispatch: AppDispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +42,13 @@ const LoginPage = () => {
     if (res.ok) {
       // Cache the token in local storage
       localStorage.setItem("token", data.token);
-      router.push("/authorize/dashboard"); // Redirect to a protected page
+      localStorage.setItem("user", JSON.stringify(data.user));
+      // console.log(res);
+      // console.log(data);
+      // Dispatch the user ID and role to the Redux store
+      dispatch(login(data.user));
+
+      router.push("/authorize/dashboard");
     } else {
       setError(data.error || "An error occurred");
     }

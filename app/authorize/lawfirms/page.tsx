@@ -118,7 +118,6 @@ const LawFirmList: React.FC = () => {
         </div>
       </div>
 
-      <h1>Hello</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {currentLawFirms.map((firm: LawFirm) => (
           <LawFirmCard key={firm.id} lawFirm={firm} />

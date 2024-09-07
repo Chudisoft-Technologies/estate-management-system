@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { RootState } from "../../store";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -10,11 +10,13 @@ import {
   faPhone,
   faMapMarkerAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { ROLES } from "@/constants/roles";
 
 const LawFirmForm: React.FC = () => {
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
+
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -25,8 +27,8 @@ const LawFirmForm: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
-    } else if (user?.role !== "admin" && user?.role !== "manager") {
+      router.push("/authorize/login");
+    } else if (user?.role !== ROLES.ADMIN && user?.role !== ROLES.MANAGER) {
       router.push("/unauthorized");
     }
   }, [isAuthenticated, user, router]);
