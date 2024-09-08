@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchLawFirms } from "../../store/lawfirmSlice";
-import { AppDispatch, RootState } from "../../store";
+import axios from "axios";
 import LawFirmCard from "./LawFirmCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
@@ -12,40 +10,53 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { LawFirm } from "@prisma/client";
 
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
-
 const LawFirmList: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const { lawfirms, status, error } = useSelector(
-    (state: RootState) => state.lawfirms
-  );
+  const [lawfirms, setLawfirms] = useState<LawFirm[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [isClient, setIsClient] = useState(false); // New state to check client render
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchLawFirms());
-    setIsClient(true); // Set to true when component is mounted (on client)
-  }, [dispatch]);
+    const fetchLawFirms = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await axios.get("/api/v1/lawfirm", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log("Fetched data:", response.data); // Log the fetched data
+
+        if (Array.isArray(response.data.data)) {
+          setLawfirms(response.data.data);
+        } else {
+          console.error("Unexpected data format:", response.data);
+          setLawfirms([]);
+        }
+      } catch (error) {
+        console.error("Error fetching law firms:", error);
+        setLawfirms([]);
+      }
+    };
+
+    fetchLawFirms();
+    setIsClient(true);
+  }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof (typeof lawfirms)[0]) => {
+  const handleSort = (column: keyof LawFirm) => {
     const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
-    // Sort logic based on column and order
   };
 
   const filteredLawFirms = lawfirms
-    .filter((firm: LawFirm) =>
+    .filter((firm) =>
       firm.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) =>
@@ -65,7 +76,7 @@ const LawFirmList: React.FC = () => {
     const doc = new jsPDF();
     doc.autoTable({
       head: [["Name", "Address", "Phone", "Email"]],
-      body: lawfirms.map((firm: LawFirm) => [
+      body: lawfirms.map((firm) => [
         firm.name,
         firm.address,
         firm.phone,
@@ -76,33 +87,41 @@ const LawFirmList: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const csvData = lawfirms.map((firm: LawFirm) => ({
+    const csvData = lawfirms.map((firm) => ({
       Name: firm.name,
       Address: firm.address,
       Phone: firm.phone,
       Email: firm.email,
     }));
-    const csvBlob = new Blob([csvData.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const csvBlob = new Blob(
+      [csvData.map((row) => Object.values(row).join(",")).join("\n")],
+      {
+        type: "text/csv;charset=utf-8;",
+      }
+    );
     saveAs(csvBlob, "lawfirms.csv");
   };
 
   return (
-    <div className="container mx-auto px-4 ">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
           placeholder="Search..."
           value={searchTerm}
           onChange={handleSearch}
-          className="p-2 border rounded"
+          className="p-2 border border-gray-300 rounded"
         />
+
         <div className="flex space-x-2">
-          {/* Only render CSVLink on the client to avoid mismatch */}
           {isClient && (
             <CSVLink
-              data={lawfirms}
+              data={lawfirms.map((firm) => ({
+                Name: firm.name,
+                Address: firm.address,
+                Phone: firm.phone,
+                Email: firm.email,
+              }))}
               filename={"lawfirms.csv"}
               className="btn btn-primary"
             >
@@ -118,17 +137,24 @@ const LawFirmList: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {currentLawFirms.map((firm: LawFirm) => (
-          <LawFirmCard key={firm.id} lawFirm={firm} />
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {currentLawFirms.length > 0 ? (
+          currentLawFirms.map((firm) => (
+            <LawFirmCard key={firm.id} lawFirm={firm} />
+          ))
+        ) : (
+          <p>No law firms found.</p>
+        )}
       </div>
-      <Pagination
-        itemsPerPage={itemsPerPage}
-        totalItems={filteredLawFirms.length}
-        currentPage={currentPage}
-        paginate={(pageNumber: number) => setCurrentPage(pageNumber)}
-      />
+
+      <div className="flex justify-center mb-8">
+        <Pagination
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredLawFirms.length}
+          currentPage={currentPage}
+          paginate={(pageNumber) => setCurrentPage(pageNumber)}
+        />
+      </div>
     </div>
   );
 };

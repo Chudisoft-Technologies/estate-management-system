@@ -1,41 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { PrismaClient } from "@prisma/client";
+import jwt from "jsonwebtoken"; // You can use any JWT library for decoding/validating tokens
 
-const prisma = new PrismaClient();
+// Ensure you have the JWT_SECRET defined in your environment variables
+const JWT_SECRET = process.env.NEXTAUTH_SECRET || "your-secret-key";
 
 export async function authenticate(
   request: NextRequest,
   allowedRoles: string[] = []
 ) {
-  // const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  // Retrieve token from the Authorization header
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
 
   if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  //   Check if the user's role is allowed
-  const userRole = token.role; // Assuming the role is stored in the token
-  if (!allowedRoles.includes(userRole as string)) {
     return NextResponse.json(
-      { error: "Forbidden: Access Denied" },
-      { status: 403 }
+      { error: "Unauthorized: No Token Provided" },
+      { status: 401 }
     );
   }
 
-  // Fetch the user's role from the database
-  //   const user = await prisma.user.findUnique({
-  //     where: { email: token.email as string },
-  //     select: { role: true },
-  //   });
+  try {
+    // Decode and verify the token with your JWT secret
+    const decodedToken = jwt.verify(token, JWT_SECRET) as any;
 
-  //   if (!user || !allowedRoles.includes(user.role)) {
-  //     return NextResponse.json({ error: 'Forbidden: Access Denied' }, { status: 403 });
-  //   }
+    // Check if the token contains a valid role
+    const userRole = decodedToken.role; // Assuming the role is stored in the token under 'role'
+    if (!allowedRoles.includes(userRole)) {
+      return NextResponse.json(
+        { error: "Forbidden: Access Denied" },
+        { status: 403 }
+      );
+    }
 
-  return token; // Return the token if the user is authorized
+    // Token is valid and user has correct role
+    return decodedToken; // Return the decoded token object
+  } catch (err) {
+    // Handle invalid or expired token errors
+    return NextResponse.json(
+      { error: "Unauthorized: Invalid or Expired Token" },
+      { status: 401 }
+    );
+  }
 }

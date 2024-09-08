@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, LawFirm } from '@prisma/client';
-import { authenticate } from '../auth/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient, LawFirm } from "@prisma/client";
+import { authenticate } from "../auth/auth";
 
 const prisma = new PrismaClient();
-const allowedRoles = ['admin', 'user'];
+const allowedRoles = ["admin", "user"];
 
 /**
  * @swagger
@@ -151,31 +151,38 @@ const allowedRoles = ['admin', 'user'];
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  const id = searchParams.get("id");
 
   if (id) {
     const lawfirm = await prisma.lawFirm.findUnique({
       where: { id: parseInt(id) },
     });
-    
+
     if (lawfirm) {
       return NextResponse.json(lawfirm);
     } else {
-      return NextResponse.json({ message: 'LawFirm not found' }, { status: 404 });
+      return NextResponse.json(
+        { message: "LawFirm not found" },
+        { status: 404 }
+      );
     }
   }
 
   // Existing code for handling lists, pagination, filtering, and sorting
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '10');
-  const sortBy = searchParams.get('sortBy') || 'createdAt';
-  const order = searchParams.get('order') || 'asc'; // or 'desc'
-  const searchWord = searchParams.get('searchWord');
-  const fromDate = searchParams.get('fromDate') ? new Date(searchParams.get('fromDate')!) : null;
-  const toDate = searchParams.get('toDate') ? new Date(searchParams.get('toDate')!) : null;
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const order = searchParams.get("order") || "asc"; // or 'desc'
+  const searchWord = searchParams.get("searchWord");
+  const fromDate = searchParams.get("fromDate")
+    ? new Date(searchParams.get("fromDate")!)
+    : null;
+  const toDate = searchParams.get("toDate")
+    ? new Date(searchParams.get("toDate")!)
+    : null;
 
   const where = {
     AND: [
@@ -210,8 +217,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
-  
+  console.log(token);
+  // if (token !== null) return token; i need more knowledge about this
+
   const data = await request.json();
   const newLawFirm = await prisma.lawFirm.create({
     data,
@@ -222,7 +230,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const token = await authenticate(request);
   if (token !== null) return token;
-  
+
   const { id, ...data } = await request.json();
   const updatedLawFirm = await prisma.lawFirm.update({
     where: { id },
@@ -234,9 +242,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const token = await authenticate(request);
   if (token !== null) return token;
-  
+
   const { searchParams } = new URL(request.url);
-  const id = parseInt(searchParams.get('id') || '');
+  const id = parseInt(searchParams.get("id") || "");
   const deletedLawFirm = await prisma.lawFirm.delete({
     where: { id },
   });
