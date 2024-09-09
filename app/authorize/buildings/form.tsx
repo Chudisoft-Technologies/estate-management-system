@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchBuilding,
@@ -12,6 +12,7 @@ import { fetchLawFirms } from "../../store/lawfirmSlice";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuilding, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import { AppDispatch, RootState } from "../../store/index";
+import Image from "next/image";
 
 interface BuildingFormProps {
   buildingId?: number; // Optional ID for editing
@@ -155,12 +156,14 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
                     managerId === user.id ? "bg-blue-200" : "bg-white"
                   }`}
                 >
-                  <img
-                    src={user.image?.toString()}
-                    alt={user.name?.toString()}
-                    className="w-16 h-16 rounded-full"
+                  <Image
+                    src={user.image || "/default-avatar.png"}
+                    alt={user.fullName || "Manager"}
+                    width={64} // Example width
+                    height={64} // Example height
+                    className="rounded-full"
                   />
-                  <p className="text-center">{user.name}</p>
+                  <p className="text-center">{user.fullName}</p>
                 </div>
               ))}
             </div>
