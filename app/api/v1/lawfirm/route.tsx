@@ -151,7 +151,7 @@ const allowedRoles = ["admin", "user"];
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
-  // if (token !== null) return token;
+  if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -217,8 +217,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const token = await authenticate(request);
-  console.log(token);
-  // if (token !== null) return token; i need more knowledge about this
+
+  if (token !== null) return token;
 
   const data = await request.json();
   const newLawFirm = await prisma.lawFirm.create({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBuildings } from "../../store/buildingSlice";
 import { AppDispatch, RootState } from "../../store/index";
@@ -29,7 +29,12 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
 
     if (apartmentId) {
       // Fetch apartment details for editing
-      fetch(`/api/v1/apartments/${apartmentId}`)
+      const token = localStorage.getItem("authToken"); // Get token from local storage
+      fetch(`/api/v1/apartments/${apartmentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Add token to headers
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           setName(data.name);
@@ -52,16 +57,19 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       : "/api/v1/apartments";
     const method = apartmentId ? "PUT" : "POST";
 
+    const token = localStorage.getItem("authToken"); // Get token from local storage
+
     const res = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Add token to headers
       },
       body: JSON.stringify(apartmentData),
     });
 
     if (res.ok) {
-      router.push("/apartments");
+      router.push("authorize/apartments");
     } else {
       const data = await res.json();
       setError(data.error || "Failed to save apartment");
@@ -141,7 +149,6 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
                     buildingId === building.id ? "bg-blue-200" : "bg-white"
                   }`}
                 >
-                  {/* <img src={building.photo || '/default-building.png'} alt={building.name} className="w-16 h-16 rounded-full" /> */}
                   <p className="text-center">{building.name}</p>
                   <p className="text-center text-sm text-gray-500">
                     {building.estate}
