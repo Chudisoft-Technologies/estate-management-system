@@ -3,19 +3,18 @@ import { PrismaClient, LawFirm } from "@prisma/client";
 import { authenticate } from "../auth/auth";
 
 const prisma = new PrismaClient();
-const allowedRoles = ["admin", "user"];
 
 /**
  * @swagger
  * tags:
  *   - name: LawFirms
- *     description: Law firm management
+ *     description: LawFirm management
  *
- * /law-firms:
+ * /lawfirms:
  *   get:
  *     tags:
  *       - LawFirms
- *     summary: Retrieve a list of law firms or a specific law firm by ID
+ *     summary: Retrieve a list of lawfirms or a specific lawfirm by ID
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -23,7 +22,7 @@ const allowedRoles = ["admin", "user"];
  *         name: id
  *         schema:
  *           type: integer
- *         description: ID of the law firm to retrieve
+ *         description: ID of the lawfirm to retrieve
  *       - in: query
  *         name: page
  *         schema:
@@ -38,7 +37,7 @@ const allowedRoles = ["admin", "user"];
  *         name: sortBy
  *         schema:
  *           type: string
- *         description: Field to sort by (e.g., "name", "city")
+ *         description: Field to sort by (e.g., "name", "cost")
  *       - in: query
  *         name: order
  *         schema:
@@ -51,23 +50,23 @@ const allowedRoles = ["admin", "user"];
  *           type: string
  *         description: Filter by name
  *       - in: query
- *         name: city
+ *         name: costMin
  *         schema:
- *           type: string
- *         description: Filter by city
+ *           type: number
+ *         description: Minimum cost filter
  *     responses:
  *       200:
- *         description: Law firm details or a list of law firms
+ *         description: LawFirm details or a list of lawfirms
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Access Denied
  *       404:
- *         description: Law firm not found
+ *         description: LawFirm not found
  *   post:
  *     tags:
  *       - LawFirms
- *     summary: Create a new law firm
+ *     summary: Create a new lawfirm
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -79,20 +78,20 @@ const allowedRoles = ["admin", "user"];
  *             properties:
  *               name:
  *                 type: string
- *               city:
+ *               cost:
+ *                 type: number
+ *               costBy:
  *                 type: string
  *               address:
  *                 type: string
- *               contactEmail:
- *                 type: string
  *             required:
  *               - name
- *               - city
+ *               - cost
+ *               - costBy
  *               - address
- *               - contactEmail
  *     responses:
  *       201:
- *         description: Law firm created
+ *         description: LawFirm created
  *       401:
  *         description: Unauthorized
  *       403:
@@ -100,7 +99,7 @@ const allowedRoles = ["admin", "user"];
  *   put:
  *     tags:
  *       - LawFirms
- *     summary: Update an existing law firm
+ *     summary: Update an existing lawfirm
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -114,15 +113,15 @@ const allowedRoles = ["admin", "user"];
  *                 type: integer
  *               name:
  *                 type: string
- *               city:
+ *               cost:
+ *                 type: number
+ *               costBy:
  *                 type: string
  *               address:
  *                 type: string
- *               contactEmail:
- *                 type: string
  *     responses:
  *       200:
- *         description: Law firm updated
+ *         description: LawFirm updated
  *       401:
  *         description: Unauthorized
  *       403:
@@ -130,7 +129,7 @@ const allowedRoles = ["admin", "user"];
  *   delete:
  *     tags:
  *       - LawFirms
- *     summary: Delete a law firm
+ *     summary: Delete an lawfirm
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -139,24 +138,27 @@ const allowedRoles = ["admin", "user"];
  *         schema:
  *           type: integer
  *         required: true
- *         description: ID of the law firm to delete
+ *         description: ID of the lawfirm to delete
  *     responses:
  *       200:
- *         description: Law firm deleted
+ *         description: LawFirm deleted
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Access Denied
  */
-
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
 
-  if (token !== null) return token;
+  // Ensure the token is valid
+  if (!token) {
+    return NextResponse.json({ message: "Unauthorized v" }, { status: 401 });
+  }
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
+  // If 'id' is provided, fetch a single lawfirm by id
   if (id) {
     const lawfirm = await prisma.lawFirm.findUnique({
       where: { id: parseInt(id) },
@@ -172,7 +174,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Existing code for handling lists, pagination, filtering, and sorting
+  // If 'id' is not provided, fetch a list of all lawfirms
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");
   const sortBy = searchParams.get("sortBy") || "createdAt";
@@ -185,6 +187,7 @@ export async function GET(request: NextRequest) {
     ? new Date(searchParams.get("toDate")!)
     : null;
 
+  // Define search filters for lawfirms (if search filters are provided)
   const where = {
     AND: [
       searchWord ? { name: { contains: searchWord } } : {},
@@ -196,6 +199,7 @@ export async function GET(request: NextRequest) {
     ],
   };
 
+  // Fetch lawfirms based on filters and pagination
   const lawfirms = await prisma.lawFirm.findMany({
     where,
     orderBy: { [sortBy]: order },
@@ -203,6 +207,7 @@ export async function GET(request: NextRequest) {
     take: limit,
   });
 
+  // Count total lawfirms for pagination
   const total = await prisma.lawFirm.count({ where });
 
   return NextResponse.json({
@@ -218,8 +223,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const token = await authenticate(request);
-
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const data = await request.json();
   const newLawFirm = await prisma.lawFirm.create({
@@ -230,7 +234,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { id, ...data } = await request.json();
   const updatedLawFirm = await prisma.lawFirm.update({
@@ -242,7 +246,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
   const id = parseInt(searchParams.get("id") || "");

@@ -23,17 +23,21 @@ const LawFirmList: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         console.log("Token:", token); // Debug token
+
         const response = await axios.get("/api/v1/lawfirm", {
+          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        console.log("Fetched data:", response.data); // Debug fetched data
+        console.log("Fetched data hhh:", response.data.data); // Debug fetched data
 
-        // Ensure response.data.data is an array of law firms
-        if (Array.isArray(response.data.data)) {
-          setLawfirms(response.data.data);
+        // Check if lawfirms are directly available in response.data
+        const fetchedLawFirms = response.data.data || []; // Adjust as per actual data structure
+        // console.log(fetchLawFirms);
+        if (Array.isArray(fetchedLawFirms)) {
+          setLawfirms(fetchedLawFirms);
         } else {
           console.error("Unexpected data format:", response.data);
           setLawfirms([]);

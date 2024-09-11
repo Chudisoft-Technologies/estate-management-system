@@ -63,7 +63,8 @@ const LawFirmForm: React.FC = () => {
         throw new Error("Failed to save law firm details");
       }
 
-      router.push("/authorize/lawfirms");
+      console.log("done");
+      // router.push("/authorize/lawfirms");
     } catch (err: any) {
       setError(err.message);
     }

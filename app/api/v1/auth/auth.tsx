@@ -45,7 +45,7 @@ export async function authenticate(
     }
 
     // Token is valid and user has correct role
-    return NextResponse.json({ user: decodedToken }, { status: 200 });
+    // return NextResponse.json({ user: decodedToken }, { status: 200 });
   } catch (err) {
     console.error("Authentication Error:", err); // Debug: log error details
     return NextResponse.json(
@@ -53,4 +53,5 @@ export async function authenticate(
       { status: 401 }
     );
   }
+  return token;
 }
