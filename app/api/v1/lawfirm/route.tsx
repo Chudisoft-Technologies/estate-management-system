@@ -151,6 +151,7 @@ const allowedRoles = ["admin", "user"];
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
+
   if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);

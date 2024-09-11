@@ -65,7 +65,7 @@ const BuildingList: React.FC = () => {
       body: buildings.map((building: Building) => [
         building.name,
         building.address,
-        building.numberOfFloors,
+        building.numOfFloors,
       ]),
     });
     doc.save("buildings.pdf");
@@ -75,7 +75,7 @@ const BuildingList: React.FC = () => {
     const csvData = buildings.map((building: Building) => ({
       Name: building.name,
       Address: building.address,
-      "Number of Floors": building.numberOfFloors,
+      "Number of Floors": building.numOfFloors,
     }));
 
     const csvRows = [

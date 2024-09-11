@@ -37,13 +37,14 @@ export async function POST(req: NextRequest) {
     const token = sign(
       { email: user.email, role: user.role }, // Include user details you need in the token
       process.env.JWT_SECRET as string, // Ensure this environment variable is set
-      { expiresIn: "1h" } // Token expiry time
+      { expiresIn: "2h" } // Token expiry time set to 2 hours
     );
+
     const serializedCookie = serialize("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 3600, // 1 hour
+      maxAge: 7200, // 2 hours in seconds
       path: "/",
     });
 

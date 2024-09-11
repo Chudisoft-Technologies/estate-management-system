@@ -139,7 +139,7 @@ const Dashboard = () => {
           </li>
           <li className="mb-4">
             <Link
-              href="/authorize/expenses"
+              href="/authorize/lawfirms"
               className="text-gray-300 hover:text-white"
             >
               Expenses

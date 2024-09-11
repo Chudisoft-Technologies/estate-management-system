@@ -21,15 +21,17 @@ const LawFirmList: React.FC = () => {
   useEffect(() => {
     const fetchLawFirms = async () => {
       try {
-        const token = localStorage.getItem("authToken");
+        const token = localStorage.getItem("token");
+        console.log("Token:", token); // Debug token
         const response = await axios.get("/api/v1/lawfirm", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        console.log("Fetched data:", response.data); // Log the fetched data
+        console.log("Fetched data:", response.data); // Debug fetched data
 
+        // Ensure response.data.data is an array of law firms
         if (Array.isArray(response.data.data)) {
           setLawfirms(response.data.data);
         } else {

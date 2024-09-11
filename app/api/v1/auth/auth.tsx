@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken"; // You can use any JWT library for decoding/validating tokens
+import jwt from "jsonwebtoken";
+import { ROLES, Role } from "@/constants/roles"; // Ensure the correct path
 
-// Ensure you have the JWT_SECRET defined in your environment variables
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "your-secret-key";
+// Retrieve JWT secret from environment variables
+const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined in environment variables");
+}
+
+// Extract all roles from the ROLES constant
+const allRoles: Role[] = Object.values(ROLES);
 
 export async function authenticate(
   request: NextRequest,
-  allowedRoles: string[] = []
+  allowedRoles: Role[] = allRoles // Default to all roles
 ) {
   // Retrieve token from the Authorization header
   const authHeader = request.headers.get("Authorization");
@@ -24,8 +32,12 @@ export async function authenticate(
     const decodedToken = jwt.verify(token, JWT_SECRET) as any;
 
     // Check if the token contains a valid role
-    const userRole = decodedToken.role; // Assuming the role is stored in the token under 'role'
-    if (!allowedRoles.includes(userRole)) {
+    const userRole = decodedToken.role;
+    console.log(userRole); // Debug: check the role in the token
+    console.log("Allowed Roles:", allowedRoles); // Debug: check allowed roles
+
+    // Check if the token role is in allowed roles
+    if (!allowedRoles.includes(userRole as Role)) {
       return NextResponse.json(
         { error: "Forbidden: Access Denied" },
         { status: 403 }
@@ -33,9 +45,9 @@ export async function authenticate(
     }
 
     // Token is valid and user has correct role
-    return decodedToken; // Return the decoded token object
+    return NextResponse.json({ user: decodedToken }, { status: 200 });
   } catch (err) {
-    // Handle invalid or expired token errors
+    console.error("Authentication Error:", err); // Debug: log error details
     return NextResponse.json(
       { error: "Unauthorized: Invalid or Expired Token" },
       { status: 401 }
