@@ -6,6 +6,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuilding, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
 import axios from "axios";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 interface BuildingFormProps {
   buildingId?: number; // Optional ID for editing
@@ -28,44 +30,37 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
   const [lawFirmId, setLawFirmId] = useState<number | null>(null);
   const [managerId, setManagerId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [lawFirms, setLawFirms] = useState<LawFirm[]>([]); // Use LawFirm type
-  const [users, setUsers] = useState<User[]>([]); // Use User type
+  const [lawFirms, setLawFirms] = useState<LawFirm[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token"); // Retrieve token from local storage
+      const token = localStorage.getItem("token");
 
       try {
-        // Fetch law firms and users
         const lawFirmsResponse = await axios.get<LawFirm[]>("/api/v1/lawfirm", {
           headers: {
-            Authorization: token ? `Bearer ${token}` : "", // Add token if available
+            Authorization: token ? `Bearer ${token}` : "",
           },
         });
         const usersResponse = await axios.get<User[]>("/api/v1/users", {
           headers: {
-            Authorization: token ? `Bearer ${token}` : "", // Add token if available
+            Authorization: token ? `Bearer ${token}` : "",
           },
         });
 
-        // Log API responses for debugging
-        console.log("Law Firms Response:", lawFirmsResponse.data);
-        console.log("Users Response:", usersResponse.data);
-
-        // Ensure the response data is an array
         setLawFirms(
           Array.isArray(lawFirmsResponse.data) ? lawFirmsResponse.data : []
         );
         setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
 
         if (buildingId) {
-          // Fetch building details for editing
           const buildingResponse = await fetch(
             `/api/v1/buildings/${buildingId}`,
             {
               headers: {
-                Authorization: token ? `Bearer ${token}` : "", // Add token if available
+                Authorization: token ? `Bearer ${token}` : "",
               },
             }
           );
@@ -75,9 +70,21 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
           setLawFirmId(buildingData.lawFirmId);
           setManagerId(buildingData.managerId);
         }
+
+        new Toastify({
+          text: "Data loaded successfully!",
+          backgroundColor: "green",
+          duration: 3000,
+        }).showToast();
       } catch (error) {
-        console.error("Error fetching data:", error); // Log error details
+        console.error("Error fetching data:", error);
         setError("Failed to load data");
+
+        new Toastify({
+          text: "Failed to load data. Please try again.",
+          backgroundColor: "red",
+          duration: 3000,
+        }).showToast();
       }
     };
 
@@ -88,7 +95,7 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
     e.preventDefault();
 
     const buildingData = { name, address, lawFirmId, managerId };
-    const token = localStorage.getItem("token"); // Retrieve token from local storage
+    const token = localStorage.getItem("token");
 
     const url = buildingId
       ? `/api/v1/buildings/${buildingId}`
@@ -100,20 +107,40 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
         method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "", // Add token if available
+          Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify(buildingData),
       });
 
       if (res.ok) {
+        new Toastify({
+          text: buildingId
+            ? "Building updated successfully!"
+            : "Building added successfully!",
+          backgroundColor: "green",
+          duration: 3000,
+        }).showToast();
+
         router.push("/buildings");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save building");
+
+        new Toastify({
+          text: data.error || "Failed to save building.",
+          backgroundColor: "red",
+          duration: 3000,
+        }).showToast();
       }
     } catch (error) {
-      console.error("Error saving building:", error); // Log error details
+      console.error("Error saving building:", error);
       setError("An error occurred while saving the building.");
+
+      new Toastify({
+        text: "An error occurred while saving the building.",
+        backgroundColor: "red",
+        duration: 3000,
+      }).showToast();
     }
   };
 
@@ -207,8 +234,8 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
                     <Image
                       src={user.image || "/default-avatar.png"}
                       alt={user.fullName || "Manager"}
-                      width={64} // Example width
-                      height={64} // Example height
+                      width={64}
+                      height={64}
                       className="rounded-full"
                     />
                     <p className="text-center">{user.fullName}</p>
