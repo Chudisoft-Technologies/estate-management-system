@@ -39,21 +39,32 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
       const token = localStorage.getItem("token");
 
       try {
-        const lawFirmsResponse = await axios.get<LawFirm[]>("/api/v1/lawfirm", {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        });
-        const usersResponse = await axios.get<User[]>("/api/v1/users", {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        });
-
-        setLawFirms(
-          Array.isArray(lawFirmsResponse.data) ? lawFirmsResponse.data : []
+        // Fetch Law Firms
+        const lawFirmsResponse = await axios.get<{ data: LawFirm[] }>(
+          "/api/v1/lawfirm",
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          }
         );
-        setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
+        const lawFirmsData = lawFirmsResponse.data.data;
+        setLawFirms(Array.isArray(lawFirmsData) ? lawFirmsData : []);
+
+        // Fetch Users
+        const usersResponse = await axios.get<{ data: User[] }>(
+          "/api/v1/users",
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          }
+        );
+        const usersData = usersResponse.data.data;
+        setUsers(Array.isArray(usersData) ? usersData : []);
+
+        console.log(lawFirmsData);
+        console.log(usersData);
 
         if (buildingId) {
           const buildingResponse = await fetch(

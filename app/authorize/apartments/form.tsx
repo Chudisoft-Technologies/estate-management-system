@@ -45,11 +45,12 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setName(data.name);
-          setCost(data.cost);
-          setCostBy(data.costBy);
-          setAddress(data.address);
-          setBuildingId(data.buildingId);
+          const apartment = data.data; // Adjust to handle data.data
+          setName(apartment.name);
+          setCost(apartment.cost);
+          setCostBy(apartment.costBy);
+          setAddress(apartment.address);
+          setBuildingId(apartment.buildingId);
         })
         .catch(() => setError("Failed to load apartment details"));
     }
@@ -159,28 +160,28 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
             <label htmlFor="building" className="block text-gray-700">
               Building
             </label>
-            <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
+            <select
+              id="building"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={buildingId ?? ""}
+              onChange={(e) => setBuildingId(Number(e.target.value))}
+              required
+            >
+              <option value="" disabled>
+                Select Building
+              </option>
               {Array.isArray(buildings) && buildings.length > 0 ? (
                 buildings.map((building) => (
-                  <div
-                    key={building.id}
-                    onClick={() => setBuildingId(building.id)}
-                    className={`cursor-pointer p-2 rounded ${
-                      buildingId === building.id ? "bg-blue-200" : "bg-white"
-                    }`}
-                  >
-                    <p className="text-center">{building.name}</p>
-                    <p className="text-center text-sm text-gray-500">
-                      {building.estate}
-                    </p>
-                  </div>
+                  <option key={building.id} value={building.id}>
+                    {building.name}
+                  </option>
                 ))
               ) : (
-                <p className="text-center text-gray-500">
+                <option value="" disabled>
                   No buildings available
-                </p>
+                </option>
               )}
-            </div>
+            </select>
           </div>
           <button
             type="submit"
