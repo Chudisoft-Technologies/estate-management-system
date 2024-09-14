@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuilding, faLocationDot } from "@fortawesome/free-solid-svg-icons";
-import Image from "next/image";
 import axios from "axios";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
@@ -27,6 +26,7 @@ interface User {
 const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [numOfFloors, setNumOfFloors] = useState<number | "">(""); // Added numOfFloors
   const [lawFirmId, setLawFirmId] = useState<number | null>(null);
   const [managerId, setManagerId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -78,6 +78,7 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
           const buildingData = await buildingResponse.json();
           setName(buildingData.name);
           setAddress(buildingData.address);
+          setNumOfFloors(buildingData.numOfFloors || ""); // Set numOfFloors if available
           setLawFirmId(buildingData.lawFirmId);
           setManagerId(buildingData.managerId);
         }
@@ -105,7 +106,7 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const buildingData = { name, address, lawFirmId, managerId };
+    const buildingData = { name, address, numOfFloors, lawFirmId, managerId }; // Include numOfFloors
     const token = localStorage.getItem("token");
 
     const url = buildingId
@@ -132,7 +133,7 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
           duration: 3000,
         }).showToast();
 
-        router.push("/buildings");
+        router.push("/authorize/buildings");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save building");
@@ -201,6 +202,19 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
               />
             </div>
           </div>
+          <div className="mb-4 relative">
+            <label htmlFor="numOfFloors" className="block text-gray-700">
+              Number of Floors
+            </label>
+            <input
+              type="number"
+              id="numOfFloors"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={numOfFloors === "" ? "" : numOfFloors}
+              onChange={(e) => setNumOfFloors(Number(e.target.value))}
+              required
+            />
+          </div>
           <div className="mb-4">
             <label htmlFor="lawFirm" className="block text-gray-700">
               Law Firm
@@ -232,30 +246,28 @@ const BuildingForm: React.FC<BuildingFormProps> = ({ buildingId }) => {
             <label htmlFor="manager" className="block text-gray-700">
               Manager
             </label>
-            <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
+            <select
+              id="manager"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={managerId ?? ""}
+              onChange={(e) => setManagerId(e.target.value)}
+              required
+            >
+              <option value="" disabled>
+                Select Manager
+              </option>
               {Array.isArray(users) && users.length > 0 ? (
                 users.map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => setManagerId(user.id)}
-                    className={`cursor-pointer p-2 rounded ${
-                      managerId === user.id ? "bg-blue-200" : "bg-white"
-                    }`}
-                  >
-                    <Image
-                      src={user.image || "/default-avatar.png"}
-                      alt={user.fullName || "Manager"}
-                      width={64}
-                      height={64}
-                      className="rounded-full"
-                    />
-                    <p className="text-center">{user.fullName}</p>
-                  </div>
+                  <option key={user.id} value={user.id}>
+                    {user.fullName}
+                  </option>
                 ))
               ) : (
-                <p>No managers available</p>
+                <option value="" disabled>
+                  No Managers Available
+                </option>
               )}
-            </div>
+            </select>
           </div>
           <button
             type="submit"
