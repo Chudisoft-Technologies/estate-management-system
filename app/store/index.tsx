@@ -7,6 +7,7 @@ import apartmentReducer from "./apartmentSlice";
 import lawfirmReducer from "./lawfirmSlice";
 import paymentReducer from "./paymentSlice";
 import bookingStatusReducer from "./bookingStatusSlice";
+import expenseReducer from "./expenseSlice";
 
 const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ const store = configureStore({
     lawfirms: lawfirmReducer,
     payments: paymentReducer,
     bookingStatuses: bookingStatusReducer,
+    expenses: expenseReducer,
   },
 });
 

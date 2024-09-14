@@ -1,64 +1,91 @@
-import { BookingStatus } from '@prisma/client';
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { BookingStatus } from "@prisma/client";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-export const fetchBookingStatuses = createAsyncThunk<BookingStatus[]>('bookingStatus/fetchBookingStatuses', async () => {
-  const response = await axios.get('/api/v1/bookingstatuses');
-  return response.data;
-});
+// Async Thunks
+export const fetchBookingStatuses = createAsyncThunk<BookingStatus[]>(
+  "bookingStatus/fetchBookingStatuses",
+  async () => {
+    const response = await axios.get("/api/v1/bookingstatuses");
+    return response.data;
+  }
+);
 
 export const fetchBookingStatus = createAsyncThunk<BookingStatus, string>(
-  'bookingStatus/fetchBookingStatus',
+  "bookingStatus/fetchBookingStatus",
   async (id: string) => {
-    const response = await axios.get<BookingStatus>(`/api/v1/bookingstatuses/${id}`);
+    const response = await axios.get<BookingStatus>(
+      `/api/v1/bookingstatuses/${id}`
+    );
     return response.data;
   }
 );
 
-export const createBookingStatus = createAsyncThunk<BookingStatus, Partial<BookingStatus>>('bookingstatus/createBookingStatus', async (bookingstatusData) => {
-  const response = await axios.post('/api/v1/bookingstatuses', bookingstatusData);
+export const createBookingStatus = createAsyncThunk<
+  BookingStatus,
+  Partial<BookingStatus>
+>("bookingstatus/createBookingStatus", async (bookingstatusData) => {
+  const response = await axios.post(
+    "/api/v1/bookingstatuses",
+    bookingstatusData
+  );
   return response.data;
 });
 
-export const updateBookingStatus = createAsyncThunk<BookingStatus, BookingStatus>(
-  'bookingStatus/updateBookingStatus',
-  async (bookingstatusData) => {
-    const { id, ...rest } = bookingstatusData;
-    const response = await axios.put(`/api/v1/bookingstatuses/${id}`, rest);
-    return response.data;
+export const updateBookingStatus = createAsyncThunk<
+  BookingStatus,
+  BookingStatus
+>("bookingStatus/updateBookingStatus", async (bookingstatusData) => {
+  const { id, ...rest } = bookingstatusData;
+  const response = await axios.put(`/api/v1/bookingstatuses/${id}`, rest);
+  return response.data;
+});
+
+export const deleteBookingStatus = createAsyncThunk<void, string>(
+  "bookingStatus/deleteBookingStatus",
+  async (id: string) => {
+    await axios.delete(`/api/v1/bookingstatuses/${id}`);
   }
 );
 
+// Initial State
 interface BookingStatusState {
   bookingStatuses: BookingStatus[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
 
 const initialState: BookingStatusState = {
   bookingStatuses: [],
-  status: 'idle',
+  status: "idle",
   error: null,
 };
 
+// Slice
 const bookingStatusSlice = createSlice({
-  name: 'bookingstatus',
+  name: "bookingstatus",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchBookingStatuses.pending, (state) => {
-        state.status = 'loading';
+        state.status = "loading";
         state.error = null;
       })
       .addCase(fetchBookingStatuses.fulfilled, (state, action) => {
         const allBookingStatuses = action.payload;
         state.bookingStatuses = allBookingStatuses;
-        state.status = 'succeeded';
+        state.status = "succeeded";
       })
       .addCase(fetchBookingStatuses.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message || null; // Handle error message
+        state.status = "failed";
+        state.error = action.error.message || null;
+      })
+      .addCase(deleteBookingStatus.fulfilled, (state, action) => {
+        const id = parseInt(action.meta.arg, 10); // Convert to number
+        state.bookingStatuses = state.bookingStatuses.filter(
+          (status) => status.id !== id
+        );
       });
   },
 });

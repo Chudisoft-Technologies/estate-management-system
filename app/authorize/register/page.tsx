@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CountryDropdown, RegionDropdown } from "react-country-region-selector";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
@@ -12,12 +11,13 @@ import {
   faPhone,
   faEye,
   faEyeSlash,
-  faGlobe,
   faMapMarkerAlt,
-  faAddressCard,
   faBriefcase,
 } from "@fortawesome/free-solid-svg-icons";
-import Link from "next/link";
+import { ROLES, Role } from "../../../constants/roles";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/index";
+
 const RegisterPage = () => {
   // Personal Details
   const [email, setEmail] = useState("");
@@ -42,7 +42,47 @@ const RegisterPage = () => {
     "personal"
   );
   const [error, setError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRole, setSelectedRole] = useState<Role | "">(""); // Manage selected role
   const router = useRouter();
+
+  // Fetch token and user roles from auth slice
+  const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.user) {
+      const userRole = auth.user.role as Role;
+      setIsAdmin(userRole === ROLES.ADMIN);
+      setRoles(Object.values(ROLES)); // Get all roles
+      setSelectedRole(userRole);
+    } else {
+      router.push("/authorize/login");
+    }
+  }, [auth, router]);
+
+  const fetchWithToken = async (url: string, options: RequestInit) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const headers: { [key: string]: string } = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    try {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...headers,
+          ...(options.headers || {}),
+        },
+      });
+      return await res.json();
+    } catch (error) {
+      console.error("An unexpected error occurred:", error);
+      throw error;
+    }
+  };
 
   const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
@@ -59,44 +99,42 @@ const RegisterPage = () => {
 
   const handlePersonalDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Perform validation if needed
     setCurrentSection("address");
   };
 
   const handleAddressDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Compute the full name from the first, middle, and last names
     const fullName = `${firstName} ${middleName || ""} ${lastName}`.trim();
 
-    const res = await fetch("/api/v1/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        firstName,
-        middleName,
-        lastName,
-        fullName, // Include the computed full name
-        username,
-        phone,
-        occupation,
-        contactAddress,
-        state,
-        lga,
-        country,
-      }),
-    });
+    try {
+      const data = await fetchWithToken("/api/v1/users", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          middleName,
+          lastName,
+          fullName,
+          username,
+          phone,
+          occupation,
+          contactAddress,
+          state,
+          lga,
+          country,
+          role: isAdmin ? selectedRole : undefined, // Add role if admin
+        }),
+      });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      router.push("/login");
-    } else {
-      setError(data.error || "An error occurred");
+      if (data.success) {
+        router.push("/login");
+      } else {
+        setError(data.error || "An error occurred");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred");
     }
   };
 
@@ -127,24 +165,6 @@ const RegisterPage = () => {
               </div>
             </div>
             <div className="mb-4 relative">
-              <label htmlFor="middleName" className="block text-gray-700">
-                Middle Name
-              </label>
-              <div className="relative">
-                <FontAwesomeIcon
-                  icon={faUser}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  id="middleName"
-                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                  value={middleName}
-                  onChange={(e) => setMiddleName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="mb-4 relative">
               <label htmlFor="lastName" className="block text-gray-700">
                 Last Name
               </label>
@@ -160,6 +180,24 @@ const RegisterPage = () => {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
+                />
+              </div>
+            </div>
+            <div className="mb-4 relative">
+              <label htmlFor="middleName" className="block text-gray-700">
+                Middle Name (optional)
+              </label>
+              <div className="relative">
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  id="middleName"
+                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
+                  value={middleName}
+                  onChange={(e) => setMiddleName(e.target.value)}
                 />
               </div>
             </div>
@@ -207,24 +245,18 @@ const RegisterPage = () => {
               </label>
               <div className="relative">
                 <FontAwesomeIcon
-                  icon={faLock}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  icon={showPassword ? faEyeSlash : faEye}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                  onClick={handlePasswordToggle}
                 />
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
-                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
+                  className="mt-1 p-2 pr-10 border border-gray-300 rounded w-full"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={handlePasswordToggle}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                </button>
               </div>
             </div>
             <div className="mb-4 relative">
@@ -237,12 +269,11 @@ const RegisterPage = () => {
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 />
                 <input
-                  type="text"
+                  type="tel"
                   id="phone"
                   className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  required
                 />
               </div>
             </div>
@@ -266,19 +297,10 @@ const RegisterPage = () => {
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded"
+              className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               Next
             </button>
-            <p className="mt-4 text-center">
-              Already have an account?{" "}
-              <Link
-                href="/authorize/login"
-                className="text-blue-500 hover:underline"
-              >
-                Login
-              </Link>
-            </p>
           </form>
         ) : (
           <form onSubmit={handleAddressDetailsSubmit}>
@@ -301,17 +323,16 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
-            <div className="mb-4 relative">
+            <div className="mb-4">
               <label htmlFor="country" className="block text-gray-700">
                 Country
               </label>
               <CountryDropdown
                 value={country}
                 onChange={(val) => setCountry(val)}
-                classes="mt-1 p-2 border border-gray-300 rounded w-full"
               />
             </div>
-            <div className="mb-4 relative">
+            <div className="mb-4">
               <label htmlFor="state" className="block text-gray-700">
                 State
               </label>
@@ -319,57 +340,62 @@ const RegisterPage = () => {
                 country={country}
                 value={state}
                 onChange={(val) => setState(val)}
-                classes="mt-1 p-2 border border-gray-300 rounded w-full"
               />
             </div>
-            <div className="mb-4 relative">
+            <div className="mb-4">
               <label htmlFor="lga" className="block text-gray-700">
                 LGA
               </label>
-              <div className="relative">
-                <FontAwesomeIcon
-                  icon={faGlobe}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  id="lga"
-                  className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                  value={lga}
-                  onChange={(e) => setLga(e.target.value)}
-                  required
-                />
-              </div>
+              <input
+                type="text"
+                id="lga"
+                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                value={lga}
+                onChange={(e) => setLga(e.target.value)}
+              />
             </div>
-            <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
-              <GoogleMap
-                center={mapCenter}
-                zoom={15}
-                mapContainerStyle={{ height: "400px", width: "100%" }}
-                onClick={(e) => handleMarkerDragEnd(e)}
-              >
-                <Marker
-                  position={mapCenter}
-                  draggable
-                  onDragEnd={handleMarkerDragEnd}
-                />
-              </GoogleMap>
-            </LoadScript>
+            <div className="mb-4">
+              <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
+                <GoogleMap
+                  mapContainerStyle={{ height: "300px", width: "100%" }}
+                  center={mapCenter}
+                  zoom={10}
+                  onClick={handleMarkerDragEnd}
+                >
+                  <Marker
+                    position={mapCenter}
+                    draggable
+                    onDragEnd={handleMarkerDragEnd}
+                  />
+                </GoogleMap>
+              </LoadScript>
+            </div>
+            {isAdmin && (
+              <div className="mb-4">
+                <label htmlFor="role" className="block text-gray-700">
+                  Role
+                </label>
+                <select
+                  id="role"
+                  className="mt-1 p-2 border border-gray-300 rounded w-full"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value as Role)}
+                >
+                  <option value="">Select Role</option>
+                  {roles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded"
+              className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
-              Submit
+              Register
             </button>
-            <p className="mt-4 text-center">
-              Already have an account?{" "}
-              <Link
-                href="/authorize/login"
-                className="text-blue-500 hover:underline"
-              >
-                Login
-              </Link>
-            </p>
           </form>
         )}
       </div>

@@ -163,7 +163,7 @@ const allowedRoles = ["admin", "user"];
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const token = await authenticate(request, [ROLES.ADMIN]);
+  const token = await authenticate(request);
 
   const data = await request.json();
   let role = token === null ? ROLES.USER : data.role;
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { id, ...data } = await request.json();
   const updatedUser = await prisma.user.update({
@@ -290,7 +290,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id") || "";

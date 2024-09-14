@@ -9,7 +9,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { useDispatch } from "react-redux";
-import { deleteBuilding } from "../../store/buildingSlice";
+import { deleteBuilding } from "../../store/buildingSlice"; // Ensure this import matches the export
 import { AppDispatch } from "../../store/index";
 
 interface BuildingCardProps {
@@ -26,8 +26,14 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
   const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
-    dispatch(deleteBuilding(building.id.toString()));
-    onDelete(building.id);
+    dispatch(deleteBuilding(building.id.toString()))
+      .unwrap()
+      .then(() => {
+        onDelete(building.id);
+      })
+      .catch((error) => {
+        console.error("Failed to delete building:", error);
+      });
   };
 
   return (

@@ -1,12 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBuildings } from "../../store/buildingSlice"; // Ensure you have this slice
+import { fetchBuildings } from "../../store/buildingSlice";
 import { AppDispatch, RootState } from "../../store";
-import BuildingCard from "./BuildingCard"; // Ensure you have this component
+import BuildingCard from "./BuildingCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
-import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Building } from "@prisma/client";
@@ -19,9 +18,15 @@ declare module "jspdf" {
 
 const BuildingList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { buildings, status, error } = useSelector(
-    (state: RootState) => state.buildings
-  );
+  const {
+    buildings = [],
+    status,
+    error,
+  } = useSelector((state: RootState) => ({
+    buildings: state.buildings.buildings || [],
+    status: state.buildings.status,
+    error: state.buildings.error,
+  }));
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,21 +40,26 @@ const BuildingList: React.FC = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof (typeof buildings)[0]) => {
+  const handleSort = (column: keyof Building) => {
     const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
-    // Sort logic based on column and order
+    // Sort logic based on column and order could be implemented here
   };
 
-  const filteredBuildings = buildings
-    .filter((building: Building) =>
-      building.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) =>
-      sortOrder === "asc"
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name)
-    );
+  console.log("Buildings:", buildings);
+  console.log("Is buildings an array?", Array.isArray(buildings));
+
+  const filteredBuildings = Array.isArray(buildings)
+    ? buildings
+        .filter((building: Building) =>
+          building.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) =>
+          sortOrder === "asc"
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name)
+        )
+    : []; // Handle cases where buildings is not an array
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -71,6 +81,24 @@ const BuildingList: React.FC = () => {
     doc.save("buildings.pdf");
   };
 
+  const exportToCSV = () => {
+    const csvData = [
+      ["Name", "Address", "Number of Floors"], // Header row
+      ...buildings.map((building) => [
+        building.name,
+        building.address,
+        building.numOfFloors,
+      ]), // Data rows
+    ];
+
+    const csvContent = csvData.map((row) => row.join(",")).join("\n");
+
+    const csvBlob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "buildings.csv");
+  };
+
   const exportToExcel = () => {
     const csvData = buildings.map((building: Building) => ({
       Name: building.name,
@@ -89,13 +117,13 @@ const BuildingList: React.FC = () => {
     saveAs(csvBlob, "buildings.csv");
   };
 
-  const onEdit = (id: number) => {
-    // Handle edit logic
-  };
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
 
-  const onDelete = (id: number) => {
-    // Handle delete logic
-  };
+  if (status === "failed") {
+    return <p>Error: {error}</p>;
+  }
 
   return (
     <div className="container mx-auto px-4">
@@ -108,13 +136,9 @@ const BuildingList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink
-            data={buildings}
-            filename={"buildings.csv"}
-            className="btn btn-primary"
-          >
+          <button onClick={exportToCSV} className="btn btn-primary">
             Export to CSV
-          </CSVLink>
+          </button>
           <button onClick={exportToPDF} className="btn btn-primary">
             Export to PDF
           </button>
@@ -128,8 +152,8 @@ const BuildingList: React.FC = () => {
           <BuildingCard
             key={building.id}
             building={building}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            onEdit={() => {}}
+            onDelete={() => {}}
           />
         ))}
       </div>

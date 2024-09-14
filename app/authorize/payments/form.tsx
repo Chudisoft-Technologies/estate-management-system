@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useSearchParams } from "next/navigation"; // Adjusted import
 import { useSelector, useDispatch } from "react-redux";
 import { fetchRent } from "../../store/rentSlice";
 import { fetchUsers } from "../../store/userSlice";
@@ -22,7 +22,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
   const [error, setError] = useState("");
 
   const router = useRouter();
-  const rentId = parseInt(router.query.rentId as string, 10);
+  const searchParams = useSearchParams(); // Using useSearchParams to get query parameters
+  const rentId = parseInt(searchParams.get("rentId") || "", 10);
 
   //   const rent = useSelector((state: RootState) => state.rents.selectedRent);
   const tenants = useSelector((state: RootState) => state.users.tenants);
@@ -37,7 +38,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
         .then((data) => {
           setRent(data.tenantId);
         })
-        .catch((error) => setError("Failed to load rent details"));
+        .catch(() => setError("Failed to load rent details"));
     }
     dispatch(fetchUsers());
   }, [dispatch, rentId]);
@@ -52,7 +53,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
           setAccountPaidTo(data.accountPaidTo);
           setPaymentDate(data.paymentDate);
         })
-        .catch((error) => setError("Failed to load payment details"));
+        .catch(() => setError("Failed to load payment details"));
     }
   }, [paymentId]);
 
@@ -152,7 +153,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
                   }`}
                 >
                   {/* <img src={tenant.image} alt={tenant.name} className="w-16 h-16 rounded-full" /> */}
-                  <p className="text-center">{tenant.name}</p>
+                  <p className="text-center">{tenant.fullName}</p>
                 </div>
               ))}
             </div>

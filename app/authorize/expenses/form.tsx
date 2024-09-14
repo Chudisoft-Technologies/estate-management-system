@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchBuildings } from "../../store/buildingSlice";
 import { fetchApartments } from "../../store/apartmentSlice";
@@ -19,12 +19,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
   const [apartmentId, setApartmentId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
-  const buildings = useSelector(
-    (state: RootState) => state.buildings.buildings
-  );
-  const apartments = useSelector(
-    (state: RootState) => state.apartments.apartments
-  );
+  // Use default values to ensure buildings and apartments are always arrays
+  const buildings =
+    useSelector((state: RootState) => state.buildings.buildings) || [];
+  const apartments =
+    useSelector((state: RootState) => state.apartments.apartments) || [];
+
   const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
 
@@ -43,7 +43,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
           setBuildingId(data.buildingId || null);
           setApartmentId(data.apartmentId || null);
         })
-        .catch((error) => setError("Failed to load expense details"));
+        .catch(() => setError("Failed to load expense details"));
     }
   }, [expenseId, dispatch]);
 
@@ -131,24 +131,30 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               Building
             </label>
             <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
-              {buildings.map((building) => (
-                <div
-                  key={building.id}
-                  onClick={() => {
-                    setBuildingId(building.id);
-                    setApartmentId(null); // Clear apartment selection if building is chosen
-                  }}
-                  className={`cursor-pointer p-2 rounded ${
-                    buildingId === building.id ? "bg-blue-200" : "bg-white"
-                  }`}
-                >
-                  {/* <img src={building.photo || '/default-building.png'} alt={building.name} className="w-16 h-16 rounded-full" /> */}
-                  <p className="text-center">{building.name}</p>
-                  <p className="text-center text-sm text-gray-500">
-                    {building.estate}
-                  </p>
-                </div>
-              ))}
+              {buildings.length > 0 ? (
+                buildings.map((building) => (
+                  <div
+                    key={building.id}
+                    onClick={() => {
+                      setBuildingId(building.id);
+                      setApartmentId(null); // Clear apartment selection if building is chosen
+                    }}
+                    className={`cursor-pointer p-2 rounded ${
+                      buildingId === building.id ? "bg-blue-200" : "bg-white"
+                    }`}
+                  >
+                    {/* <img src={building.photo || '/default-building.png'} alt={building.name} className="w-16 h-16 rounded-full" /> */}
+                    <p className="text-center">{building.name}</p>
+                    <p className="text-center text-sm text-gray-500">
+                      {building.estate}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">
+                  No buildings available
+                </p>
+              )}
             </div>
           </div>
           <div className="mb-4">
@@ -156,22 +162,28 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               Apartment
             </label>
             <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
-              {apartments.map((apartment) => (
-                <div
-                  key={apartment.id}
-                  onClick={() => {
-                    setApartmentId(apartment.id);
-                    setBuildingId(null); // Clear building selection if apartment is chosen
-                  }}
-                  className={`cursor-pointer p-2 rounded ${
-                    apartmentId === apartment.id ? "bg-green-200" : "bg-white"
-                  }`}
-                >
-                  {/* <img src={apartment.building.photo || '/default-apartment.png'} alt={apartment.name} className="w-16 h-16 rounded-full" /> */}
-                  <p className="text-center">{apartment.name}</p>
-                  {/* <p className="text-center text-sm text-gray-500">{apartment.building.name}</p> */}
-                </div>
-              ))}
+              {apartments.length > 0 ? (
+                apartments.map((apartment) => (
+                  <div
+                    key={apartment.id}
+                    onClick={() => {
+                      setApartmentId(apartment.id);
+                      setBuildingId(null); // Clear building selection if apartment is chosen
+                    }}
+                    className={`cursor-pointer p-2 rounded ${
+                      apartmentId === apartment.id ? "bg-green-200" : "bg-white"
+                    }`}
+                  >
+                    {/* <img src={apartment.building.photo || '/default-apartment.png'} alt={apartment.name} className="w-16 h-16 rounded-full" /> */}
+                    <p className="text-center">{apartment.name}</p>
+                    {/* <p className="text-center text-sm text-gray-500">{apartment.building.name}</p> */}
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">
+                  No apartments available
+                </p>
+              )}
             </div>
           </div>
           <button

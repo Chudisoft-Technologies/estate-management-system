@@ -1,27 +1,33 @@
-import { User } from '@prisma/client';
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { User } from "@prisma/client";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-export const fetchUsers = createAsyncThunk<User[]>('user/fetchUsers', async () => {
-  const response = await axios.get('/api/v1/users');
-  return response.data;
-});
+export const fetchUsers = createAsyncThunk<User[]>(
+  "user/fetchUsers",
+  async () => {
+    const response = await axios.get("/api/v1/users");
+    return response.data;
+  }
+);
 
 export const fetchUser = createAsyncThunk<User, string>(
-  'user/fetchUser',
+  "user/fetchUser",
   async (id: string) => {
     const response = await axios.get<User>(`/api/v1/users/${id}`);
     return response.data;
   }
 );
 
-export const createUser = createAsyncThunk<User, Partial<User>>('user/createUser', async (userData) => {
-  const response = await axios.post('/api/v1/users', userData);
-  return response.data;
-});
+export const createUser = createAsyncThunk<User, Partial<User>>(
+  "user/createUser",
+  async (userData) => {
+    const response = await axios.post("/api/v1/users", userData);
+    return response.data;
+  }
+);
 
 export const updateUser = createAsyncThunk<User, User>(
-  'user/updateUser',
+  "user/updateUser",
   async (userData) => {
     const { id, ...rest } = userData;
     const response = await axios.put(`/api/v1/users/${id}`, rest);
@@ -33,7 +39,7 @@ interface UserState {
   users: User[];
   managers: User[];
   tenants: User[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
 
@@ -41,29 +47,29 @@ const initialState: UserState = {
   users: [],
   managers: [],
   tenants: [],
-  status: 'idle',
+  status: "idle",
   error: null,
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchUsers.pending, (state) => {
-        state.status = 'loading';
+        state.status = "loading";
         state.error = null;
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
-        const allUsers = action.payload;
+        const allUsers = Array.isArray(action.payload) ? action.payload : []; // Ensure it's an array
         state.users = allUsers;
-        state.managers = allUsers.filter(user => user.role === 'Manager');
-        state.tenants = allUsers.filter(user => user.role === 'Tenent');
-        state.status = 'succeeded';
+        state.managers = allUsers.filter((user) => user.role === "Manager");
+        state.tenants = allUsers.filter((user) => user.role === "Tenent");
+        state.status = "succeeded";
       })
       .addCase(fetchUsers.rejected, (state, action) => {
-        state.status = 'failed';
+        state.status = "failed";
         state.error = action.error.message || null; // Handle error message
       });
   },

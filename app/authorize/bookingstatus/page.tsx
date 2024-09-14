@@ -9,7 +9,6 @@ import { saveAs } from "file-saver";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { BookingStatus } from "@prisma/client";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -42,13 +41,14 @@ const BookingStatusList: React.FC = () => {
   };
 
   const filteredBookingStatuses = bookingStatuses
-    .filter((status: BookingStatus) =>
-      status.name.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter(
+      (status) => status.status.toLowerCase().includes(searchTerm.toLowerCase()) // Use status.status for filtering
     )
-    .sort((a, b) =>
-      sortOrder === "asc"
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name)
+    .sort(
+      (a, b) =>
+        sortOrder === "asc"
+          ? a.id - b.id // Numeric comparison for ascending order
+          : b.id - a.id // Numeric comparison for descending order
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -61,19 +61,25 @@ const BookingStatusList: React.FC = () => {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [["Name", "Description"]],
-      body: bookingStatuses.map((status: BookingStatus) => [
-        status.name,
-        status.description,
+      head: [["ID", "Status", "Active", "Created At", "Updated At"]],
+      body: bookingStatuses.map((status) => [
+        status.id,
+        status.status,
+        status.active ? "Yes" : "No",
+        status.createdAt.toISOString(),
+        status.updatedAt.toISOString(),
       ]),
     });
     doc.save("booking_statuses.pdf");
   };
 
   const exportToExcel = () => {
-    const csvData = bookingStatuses.map((status: BookingStatus) => ({
-      Name: status.name,
-      Description: status.description,
+    const csvData = bookingStatuses.map((status) => ({
+      ID: status.id,
+      Status: status.status,
+      Active: status.active ? "Yes" : "No",
+      CreatedAt: status.createdAt.toISOString(),
+      UpdatedAt: status.updatedAt.toISOString(),
     }));
 
     const csvRows = [
@@ -122,7 +128,7 @@ const BookingStatusList: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {currentBookingStatuses.map((status: BookingStatus) => (
+        {currentBookingStatuses.map((status) => (
           <BookingStatusCard
             key={status.id}
             bookingStatus={status}

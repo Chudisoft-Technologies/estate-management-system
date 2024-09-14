@@ -7,10 +7,14 @@ import { AppDispatch, RootState } from "../../store";
 import ApartmentCard from "./ApartmentCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
-import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Apartment } from "@prisma/client";
+import dynamic from "next/dynamic";
+
+const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
+  ssr: false,
+});
 
 declare module "jspdf" {
   interface jsPDF {
@@ -20,9 +24,11 @@ declare module "jspdf" {
 
 const ApartmentList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { apartments, status, error } = useSelector(
-    (state: RootState) => state.apartments
-  );
+  const {
+    apartments = [],
+    status,
+    error,
+  } = useSelector((state: RootState) => state.apartments);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,10 +45,9 @@ const ApartmentList: React.FC = () => {
   const handleSort = (column: keyof (typeof apartments)[0]) => {
     const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
-    // Sort logic based on column and order
   };
 
-  const filteredApartments = apartments
+  const filteredApartments = (Array.isArray(apartments) ? apartments : [])
     .filter((firm: Apartment) =>
       firm.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -78,13 +83,11 @@ const ApartmentList: React.FC = () => {
     const csvData = apartments.map((apartment: Apartment) => ({
       Name: apartment.name,
       Address: apartment.address,
-      cost: apartment.cost,
-      costBy: apartment.costBy,
-      "Number of Rooms": apartment.numberOfRooms,
-      "Number of Palours": apartment.numberOfPalours,
-      "Building Id": apartment.buildingId,
-      // Rent: apartment.rentAmount,
-      // Status: apartment.status,
+      Cost: apartment.cost,
+      CostBy: apartment.costBy,
+      NumberOfRooms: apartment.numberOfRooms,
+      NumberOfPalours: apartment.numberOfPalours,
+      BuildingId: apartment.buildingId,
     }));
 
     const csvRows = [
@@ -98,6 +101,14 @@ const ApartmentList: React.FC = () => {
     saveAs(csvBlob, "apartments.csv");
   };
 
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
+
+  if (status === "failed") {
+    return <p>Error: {error}</p>;
+  }
+
   return (
     <div className="container mx-auto px-4">
       <div className="flex justify-between items-center mb-4">
@@ -110,7 +121,15 @@ const ApartmentList: React.FC = () => {
         />
         <div className="flex space-x-2">
           <CSVLink
-            data={apartments}
+            data={filteredApartments.map((apartment) => ({
+              Name: apartment.name,
+              Address: apartment.address,
+              Cost: apartment.cost,
+              CostBy: apartment.costBy,
+              NumberOfRooms: apartment.numberOfRooms,
+              NumberOfPalours: apartment.numberOfPalours,
+              BuildingId: apartment.buildingId,
+            }))}
             filename={"apartments.csv"}
             className="btn btn-primary"
           >
@@ -129,12 +148,8 @@ const ApartmentList: React.FC = () => {
           <ApartmentCard
             key={firm.id}
             apartment={firm}
-            onEdit={function (id: number): void {
-              throw new Error("Function not implemented.");
-            }}
-            onDelete={function (id: number): void {
-              throw new Error("Function not implemented.");
-            }}
+            onEdit={() => {}}
+            onDelete={() => {}}
           />
         ))}
       </div>

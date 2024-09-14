@@ -17,19 +17,27 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
   const [address, setAddress] = useState("");
   const [buildingId, setBuildingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [isClient, setIsClient] = useState(false); // New state for client-side checks
+  const [token, setToken] = useState<string | null>(null); // Store the token in local state
 
-  const buildings = useSelector(
-    (state: RootState) => state.buildings.buildings
-  );
+  // Ensure the selector is properly typed and default value is an empty array
+  const buildings =
+    useSelector((state: RootState) => state.buildings.buildings) || [];
+
   const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    dispatch(fetchBuildings());
+    // Ensure code that depends on the client only runs in the browser
+    setIsClient(true);
 
+    // Get token from localStorage only on the client side
+    const storedToken = localStorage.getItem("token");
+    setToken(storedToken);
+
+    dispatch(fetchBuildings());
     if (apartmentId) {
       // Fetch apartment details for editing
-      const token = localStorage.getItem("authToken"); // Get token from local storage
       fetch(`/api/v1/apartments/${apartmentId}`, {
         headers: {
           Authorization: `Bearer ${token}`, // Add token to headers
@@ -43,12 +51,17 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
           setAddress(data.address);
           setBuildingId(data.buildingId);
         })
-        .catch((error) => setError("Failed to load apartment details"));
+        .catch(() => setError("Failed to load apartment details"));
     }
-  }, [apartmentId, dispatch]);
+  }, [apartmentId, dispatch, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!name || cost <= 0 || !costBy || !address || buildingId === null) {
+      setError("Please fill in all fields");
+      return;
+    }
 
     const apartmentData = { name, cost, costBy, address, buildingId };
 
@@ -57,24 +70,30 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       : "/api/v1/apartments";
     const method = apartmentId ? "PUT" : "POST";
 
-    const token = localStorage.getItem("authToken"); // Get token from local storage
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Use the token from state
+        },
+        body: JSON.stringify(apartmentData),
+      });
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Add token to headers
-      },
-      body: JSON.stringify(apartmentData),
-    });
-
-    if (res.ok) {
-      router.push("authorize/apartments");
-    } else {
-      const data = await res.json();
-      setError(data.error || "Failed to save apartment");
+      if (res.ok) {
+        router.push("/authorize/apartments");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save apartment");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred");
     }
   };
+
+  if (!isClient) {
+    return null; // Avoid rendering until client-side code can be executed
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -141,20 +160,26 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
               Building
             </label>
             <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
-              {buildings.map((building) => (
-                <div
-                  key={building.id}
-                  onClick={() => setBuildingId(building.id)}
-                  className={`cursor-pointer p-2 rounded ${
-                    buildingId === building.id ? "bg-blue-200" : "bg-white"
-                  }`}
-                >
-                  <p className="text-center">{building.name}</p>
-                  <p className="text-center text-sm text-gray-500">
-                    {building.estate}
-                  </p>
-                </div>
-              ))}
+              {Array.isArray(buildings) && buildings.length > 0 ? (
+                buildings.map((building) => (
+                  <div
+                    key={building.id}
+                    onClick={() => setBuildingId(building.id)}
+                    className={`cursor-pointer p-2 rounded ${
+                      buildingId === building.id ? "bg-blue-200" : "bg-white"
+                    }`}
+                  >
+                    <p className="text-center">{building.name}</p>
+                    <p className="text-center text-sm text-gray-500">
+                      {building.estate}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">
+                  No buildings available
+                </p>
+              )}
             </div>
           </div>
           <button

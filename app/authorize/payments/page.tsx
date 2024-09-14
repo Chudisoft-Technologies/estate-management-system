@@ -43,12 +43,12 @@ const PaymentList: React.FC = () => {
 
   const filteredPayments = payments
     .filter((payment: Payment) =>
-      payment.reference.toLowerCase().includes(searchTerm.toLowerCase())
+      payment.paymentId.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) =>
       sortOrder === "asc"
-        ? a.reference.localeCompare(b.reference)
-        : b.reference.localeCompare(a.reference)
+        ? a.paymentId.localeCompare(b.paymentId)
+        : b.paymentId.localeCompare(a.paymentId)
     );
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -61,11 +61,11 @@ const PaymentList: React.FC = () => {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [["Reference", "Amount", "Status"]],
+      head: [["Payment_Id", "Amount", "Status"]],
       body: payments.map((payment: Payment) => [
-        payment.reference,
-        payment.amount,
-        payment.status,
+        payment.paymentId,
+        payment.amountPaid,
+        payment.active,
       ]),
     });
     doc.save("payments.pdf");
@@ -73,9 +73,9 @@ const PaymentList: React.FC = () => {
 
   const exportToExcel = () => {
     const csvData = payments.map((payment: Payment) => ({
-      Reference: payment.reference,
-      Amount: payment.amount,
-      Status: payment.status,
+      Payment_Id: payment.paymentId,
+      Amount: payment.amountPaid,
+      Status: payment.active,
     }));
 
     const csvRows = [

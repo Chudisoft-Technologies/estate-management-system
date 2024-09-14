@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Rent } from '@prisma/client';
-import { authenticate } from '../auth/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient, Rent } from "@prisma/client";
+import { authenticate } from "../auth/auth";
 
 const prisma = new PrismaClient();
-const allowedRoles = ['admin', 'user'];
+const allowedRoles = ["admin", "user"];
 
 /**
  * @swagger
@@ -164,33 +164,41 @@ export async function GET(request: NextRequest) {
   if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+  const id = searchParams.get("id");
 
   if (id) {
     const rent = await prisma.rent.findUnique({
       where: { id: parseInt(id) },
     });
-    
+
     if (rent) {
       return NextResponse.json(rent);
     } else {
-      return NextResponse.json({ message: 'Rent not found' }, { status: 404 });
+      return NextResponse.json({ message: "Rent not found" }, { status: 404 });
     }
   }
 
   // Existing code for handling lists, pagination, filtering, and sorting
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '10');
-  const sortBy = searchParams.get('sortBy') || 'createdAt';
-  const order = searchParams.get('order') || 'asc'; // or 'desc'
-  const searchWord = searchParams.get('searchWord');
-  const fromDate = searchParams.get('fromDate') ? new Date(searchParams.get('fromDate')!) : null;
-  const toDate = searchParams.get('toDate') ? new Date(searchParams.get('toDate')!) : null;
-  const rentId = parseInt(searchParams.get('rentId') || '0');
-  const totalAmount = parseFloat(searchParams.get('totalAmount') || '0');
-  const startDate = searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : null;
-  const endDate = searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : null;
-  
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const sortBy = searchParams.get("sortBy") || "createdAt";
+  const order = searchParams.get("order") || "asc"; // or 'desc'
+  const searchWord = searchParams.get("searchWord");
+  const fromDate = searchParams.get("fromDate")
+    ? new Date(searchParams.get("fromDate")!)
+    : null;
+  const toDate = searchParams.get("toDate")
+    ? new Date(searchParams.get("toDate")!)
+    : null;
+  const rentId = parseInt(searchParams.get("rentId") || "0");
+  const totalAmount = parseFloat(searchParams.get("totalAmount") || "0");
+  const startDate = searchParams.get("startDate")
+    ? new Date(searchParams.get("startDate")!)
+    : null;
+  const endDate = searchParams.get("endDate")
+    ? new Date(searchParams.get("endDate")!)
+    : null;
+
   const where = {
     AND: [
       searchWord ? { tenantId: { contains: searchWord } } : {},
@@ -227,7 +235,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const token = await authenticate(request);
   if (token !== null) return token;
-  
+
   const data = await request.json();
   const newRent = await prisma.rent.create({
     data,
@@ -238,7 +246,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const token = await authenticate(request);
   if (token !== null) return token;
-  
+
   const { id, ...data } = await request.json();
   const updatedRent = await prisma.rent.update({
     where: { id },
@@ -250,9 +258,9 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const token = await authenticate(request);
   if (token !== null) return token;
-  
+
   const { searchParams } = new URL(request.url);
-  const id = parseInt(searchParams.get('id') || '');
+  const id = parseInt(searchParams.get("id") || "");
   const deletedRent = await prisma.rent.delete({
     where: { id },
   });

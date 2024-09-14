@@ -30,7 +30,7 @@ const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faTag} className="mr-2 text-gray-600" />
-        {bookingStatus.name}
+        {bookingStatus.id}
       </h3>
       <div className="mt-4 flex justify-between">
         <button

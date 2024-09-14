@@ -67,7 +67,7 @@ const ExpenseList: React.FC = () => {
         expense.name,
         expense.amount,
         expense.category,
-        expense.date,
+        expense.createdAt,
       ]),
     });
     doc.save("expenses.pdf");
@@ -78,7 +78,7 @@ const ExpenseList: React.FC = () => {
       Name: expense.name,
       Amount: expense.amount,
       Category: expense.category,
-      Date: expense.date,
+      Date: expense.createdAt,
     }));
 
     const csvRows = [

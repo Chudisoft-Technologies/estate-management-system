@@ -26,7 +26,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
   const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
-    dispatch(deleteExpense(expense.id.toString()));
+    dispatch(deleteExpense(expense.id)); // Pass number directly
     onDelete(expense.id);
   };
 
