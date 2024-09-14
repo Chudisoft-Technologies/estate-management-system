@@ -11,6 +11,8 @@ import {
   faMapMarkerAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { ROLES } from "@/constants/roles";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 const LawFirmForm: React.FC = () => {
   const [name, setName] = useState("");
@@ -19,7 +21,7 @@ const LawFirmForm: React.FC = () => {
   const [address, setAddress] = useState("");
   const [error, setError] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [token, setToken] = useState<string | null>(null); // Store the token in local state
+  const [token, setToken] = useState<string | null>(null);
 
   const router = useRouter();
   const { isAuthenticated, user } = useSelector(
@@ -27,10 +29,7 @@ const LawFirmForm: React.FC = () => {
   );
 
   useEffect(() => {
-    // Ensure code that depends on the client only runs in the browser
     setIsClient(true);
-
-    // Get token from localStorage only on the client side
     const storedToken = localStorage.getItem("token");
     setToken(storedToken);
 
@@ -54,7 +53,7 @@ const LawFirmForm: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Use the token from state
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ name, email, phone, address }),
       });
@@ -63,33 +62,41 @@ const LawFirmForm: React.FC = () => {
         throw new Error("Failed to save law firm details");
       }
 
-      console.log("done");
-      // router.push("/authorize/lawfirms");
+      new Toastify({
+        text: "Law firm details saved successfully!",
+        backgroundColor: "green",
+        duration: 3000,
+      }).showToast();
+
+      router.push("/authorize/lawfirms");
     } catch (err: any) {
-      setError(err.message);
+      new Toastify({
+        text: err.message || "An error occurred. Please try again.",
+        backgroundColor: "red",
+        duration: 3000,
+      }).showToast();
     }
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Remove non-numeric characters
     const value = e.target.value.replace(/[^0-9]/g, "");
     setPhone(value);
   };
 
   if (!isClient) {
-    return null; // Avoid rendering until client-side code can be executed
+    return null;
   }
 
   if (
     !isAuthenticated ||
     (user?.role !== ROLES.ADMIN && user?.role !== ROLES.MANAGER)
   ) {
-    return null; // Or you could return a loading spinner
+    return null;
   }
 
   return (
     <div className="p-8 bg-white rounded shadow-md max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-6 ">Law Firm Form</h2>
+      <h2 className="text-2xl font-bold mb-6">Law Firm Form</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="mb-4 relative">
@@ -121,7 +128,7 @@ const LawFirmForm: React.FC = () => {
         <div className="mb-4 relative">
           <FontAwesomeIcon
             icon={faPhone}
-            className="absolute left-3 top-3 text-gray-400 "
+            className="absolute left-3 top-3 text-gray-400"
           />
           <input
             type="text"
