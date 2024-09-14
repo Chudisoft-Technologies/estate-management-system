@@ -1,40 +1,57 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchBuildings } from "../../store/buildingSlice";
-import { AppDispatch, RootState } from "../../store";
+import axios from "axios";
 import BuildingCard from "./BuildingCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Building } from "@prisma/client";
-
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 const BuildingList: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const {
-    buildings = [],
-    status,
-    error,
-  } = useSelector((state: RootState) => ({
-    buildings: state.buildings.buildings || [],
-    status: state.buildings.status,
-    error: state.buildings.error,
-  }));
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [status, setStatus] = useState<"loading" | "succeeded" | "failed">(
+    "loading"
+  );
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchBuildings());
-  }, [dispatch]);
+    const fetchBuildings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await axios.get("/api/v1/buildings", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setBuildings(response.data.data || []);
+        setStatus("succeeded");
+      } catch (err: any) {
+        console.error("Error fetching buildings:", err);
+        setError(err.message || "Failed to fetch buildings.");
+        setStatus("failed");
+        new Toastify({
+          text: "Error fetching buildings: " + (err.message || "Unknown error"),
+          duration: 3000,
+          backgroundColor: "linear-gradient(to right, #FF4B2B, #FF416C)",
+        }).showToast();
+      }
+    };
+
+    fetchBuildings();
+  }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -46,20 +63,15 @@ const BuildingList: React.FC = () => {
     // Sort logic based on column and order could be implemented here
   };
 
-  console.log("Buildings:", buildings);
-  console.log("Is buildings an array?", Array.isArray(buildings));
-
-  const filteredBuildings = Array.isArray(buildings)
-    ? buildings
-        .filter((building: Building) =>
-          building.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .sort((a, b) =>
-          sortOrder === "asc"
-            ? a.name.localeCompare(b.name)
-            : b.name.localeCompare(a.name)
-        )
-    : []; // Handle cases where buildings is not an array
+  const filteredBuildings = buildings
+    .filter((building) =>
+      building.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) =>
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
+    );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -72,7 +84,7 @@ const BuildingList: React.FC = () => {
     const doc = new jsPDF();
     doc.autoTable({
       head: [["Name", "Address", "Number of Floors"]],
-      body: buildings.map((building: Building) => [
+      body: buildings.map((building) => [
         building.name,
         building.address,
         building.numOfFloors,
@@ -100,7 +112,7 @@ const BuildingList: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const csvData = buildings.map((building: Building) => ({
+    const csvData = buildings.map((building) => ({
       Name: building.name,
       Address: building.address,
       "Number of Floors": building.numOfFloors,
@@ -148,12 +160,14 @@ const BuildingList: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {currentBuildings.map((building: Building) => (
+        {currentBuildings.map((building) => (
           <BuildingCard
             key={building.id}
             building={building}
             onEdit={() => {}}
-            onDelete={() => {}}
+            onDelete={(id) => {
+              setBuildings(buildings.filter((b) => b.id !== id)); // Update the list after deletion
+            }}
           />
         ))}
       </div>
@@ -161,7 +175,7 @@ const BuildingList: React.FC = () => {
         itemsPerPage={itemsPerPage}
         totalItems={filteredBuildings.length}
         currentPage={currentPage}
-        paginate={(pageNumber: number) => setCurrentPage(pageNumber)}
+        paginate={(pageNumber) => setCurrentPage(pageNumber)}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { Building } from "@prisma/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,14 +9,11 @@ import {
   faEdit,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import { useDispatch } from "react-redux";
-import { deleteBuilding } from "../../store/buildingSlice"; // Ensure this import matches the export
-import { AppDispatch } from "../../store/index";
 
 interface BuildingCardProps {
   building: Building;
   onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: number) => void; // Add onDelete to props
 }
 
 const BuildingCard: React.FC<BuildingCardProps> = ({
@@ -23,17 +21,24 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const dispatch: AppDispatch = useDispatch();
-
-  const handleDelete = () => {
-    dispatch(deleteBuilding(building.id.toString()))
-      .unwrap()
-      .then(() => {
-        onDelete(building.id);
-      })
-      .catch((error) => {
-        console.error("Failed to delete building:", error);
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/buildings?id=${building.id}`, {
+        method: "DELETE",
       });
+      if (response.ok) {
+        console.log(`Building ${building.id} deleted successfully`);
+        onDelete(building.id); // Call onDelete prop on successful deletion
+      } else {
+        console.error(`Failed to delete building: ${response.statusText}`);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Failed to delete building:", error.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
+    }
   };
 
   return (
