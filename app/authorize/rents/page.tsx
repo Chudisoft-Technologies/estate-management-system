@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchRents } from "../../store/rentSlice"; // Ensure you have this slice
-import { AppDispatch, RootState } from "../../store";
-import RentCard from "./RentCard"; // Ensure you have this component
+import RentCard from "./RentCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
-import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Rent } from "@prisma/client";
 import Toastify from "toastify-js";
-import "toastify-js/src/toastify.css"; // Import Toastify CSS
+import "toastify-js/src/toastify.css";
+import dynamic from "next/dynamic";
+
+const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
+  ssr: false,
+});
 
 declare module "jspdf" {
   interface jsPDF {
@@ -21,69 +22,78 @@ declare module "jspdf" {
 }
 
 const RentList: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const { rents, status, error } = useSelector(
-    (state: RootState) => state.rents
-  );
+  const [rents, setRents] = useState<Rent[]>([]);
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "succeeded" | "failed"
+  >("idle");
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(10);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
-    const fetchRents = async () => {
+    const fetchData = async () => {
+      setStatus("loading");
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("/api/v1/rent", {
+        const response = await fetch("/api/v1/rents", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         if (!response.ok) throw new Error("Failed to fetch rents");
         const data = await response.json();
-      } catch (err) {
-        if (err instanceof Error) {
-          new Toastify({
-            text: err.message,
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-          }).showToast();
-        } else {
-          new Toastify({
-            text: "An unknown error occurred",
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-          }).showToast();
+
+        // Extract the rents from the data object
+        const rentsData: Rent[] = data.data;
+
+        // Check if rentsData is an array
+        if (!Array.isArray(rentsData)) {
+          throw new Error("Unexpected data format");
         }
+
+        setRents(rentsData);
+        setStatus("succeeded");
+      } catch (err) {
+        setStatus("failed");
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
+        new Toastify({
+          text: error ?? "An unknown error occurred",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
       }
     };
 
-    fetchRents();
-  }, [dispatch]);
+    fetchData();
+  }, [error]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof (typeof rents)[0]) => {
+  const handleSort = (column: keyof Rent) => {
     const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
-  const filteredRents = rents
-    .filter((rent: Rent) =>
-      rent.apartmentId.toString().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) =>
-      sortOrder === "asc"
-        ? a.apartmentId - b.apartmentId
-        : b.apartmentId - a.apartmentId
-    );
+  const filteredRents = Array.isArray(rents)
+    ? rents
+        .filter((rent) =>
+          rent.apartmentId.toString().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) =>
+          sortOrder === "asc"
+            ? a.apartmentId - b.apartmentId
+            : b.apartmentId - a.apartmentId
+        )
+    : [];
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -93,7 +103,7 @@ const RentList: React.FC = () => {
     const doc = new jsPDF();
     doc.autoTable({
       head: [["Apartment ID", "Amount", "Due Date"]],
-      body: rents.map((rent: Rent) => [
+      body: rents.map((rent) => [
         rent.apartmentId,
         rent.totalAmount,
         rent.endDate,
@@ -110,7 +120,12 @@ const RentList: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const csvData = rents.map((rent: Rent) => ({
+    if (!Array.isArray(rents)) {
+      console.error("Rents data is not an array");
+      return;
+    }
+
+    const csvData = rents.map((rent) => ({
       "Apartment ID": rent.apartmentId,
       Amount: rent.totalAmount,
       "Due Date": rent.endDate,
@@ -173,7 +188,7 @@ const RentList: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {currentRents.map((rent: Rent) => (
+        {currentRents.map((rent) => (
           <RentCard
             key={rent.id}
             rent={rent}

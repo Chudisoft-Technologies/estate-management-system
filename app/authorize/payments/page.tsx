@@ -1,306 +1,146 @@
 "use client";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPayments } from "../../store/paymentSlice"; // Ensure you have this slice
+import { AppDispatch, RootState } from "../../store";
+import PaymentCard from "./PaymentCard"; // Ensure you have this component
+import Pagination from "../../Pagination";
+import { saveAs } from "file-saver";
+import { CSVLink } from "react-csv";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { Payment } from "@prisma/client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Toastify from "toastify-js"; // Import Toastify
-import "toastify-js/src/toastify.css"; // Import Toastify CSS
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
-import { Rent } from "@prisma/client";
-
-interface PaymentFormProps {
-  paymentId?: number; // Optional ID for editing
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
-  const [amountPaid, setAmountPaid] = useState("");
-  const [accountPaidTo, setAccountPaidTo] = useState("");
-  const [paymentDate, setPaymentDate] = useState("");
-  const [rent, setRent] = useState({} as Rent);
-  const [tenants, setTenants] = useState<any[]>([]);
-  const [selectedTenantName, setSelectedTenantName] = useState<string>(""); // New state for tenant name
-  const [error, setError] = useState("");
-  const [token, setToken] = useState<string>(""); // State for token
-
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const rentId = parseInt(searchParams.get("rentId") || "", 10);
+const PaymentList: React.FC = () => {
+  const dispatch: AppDispatch = useDispatch();
+  const { payments, status, error } = useSelector(
+    (state: RootState) => state.payments
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
-    // Retrieve token from local storage or any other source
-    const storedToken =
-      typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-    setToken(storedToken);
-  }, []);
+    dispatch(fetchPayments());
+  }, [dispatch]);
 
-  useEffect(() => {
-    // Fetch rent details
-    if (rentId) {
-      fetch(`/api/v1/rents/${rentId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setRent(data);
-        })
-        .catch(() => {
-          setError("Failed to load rent details");
-          new Toastify({
-            text: "Failed to load rent details",
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-          }).showToast();
-        });
-    }
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
 
-    // Fetch tenants
-    fetch("/api/v1/users", {
-      headers: {
-        Authorization: `Bearer ${token}`, // Add token to header
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        const filteredTenants = data.data.filter(
-          (user: any) => user.role === "TENANT"
-        );
-        setTenants(filteredTenants);
-      })
-      .catch(() => {
-        setError("Failed to load tenants");
-        new Toastify({
-          text: "Failed to load tenants",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
-      });
-  }, [rentId, token]);
+  const handleSort = (column: keyof (typeof payments)[0]) => {
+    const order = sortOrder === "asc" ? "desc" : "asc";
+    setSortOrder(order);
+    // Sort logic based on column and order
+  };
 
-  useEffect(() => {
-    // Fetch payment details if paymentId is provided
-    if (paymentId) {
-      fetch(`/api/v1/payments/${paymentId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setAmountPaid(data.amountPaid);
-          setAccountPaidTo(data.accountPaidTo);
-          setPaymentDate(data.paymentDate);
-          // Set tenant details if available
-          if (data.tenantId) {
-            const tenant = tenants.find((t) => t.id === data.tenantId);
-            if (tenant) {
-              setSelectedTenantName(tenant.fullName);
-            }
-          }
-        })
-        .catch(() => {
-          setError("Failed to load payment details");
-          new Toastify({
-            text: "Failed to load payment details",
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-          }).showToast();
-        });
-    }
-  }, [paymentId, tenants]);
+  const filteredPayments = payments
+    .filter((payment: Payment) =>
+      payment.paymentId.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) =>
+      sortOrder === "asc"
+        ? a.paymentId.localeCompare(b.paymentId)
+        : b.paymentId.localeCompare(a.paymentId)
+    );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPayments = filteredPayments.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
-    const paymentData = {
-      paymentId, // Include paymentId
-      amountPaid,
-      accountPaidTo,
-      paymentDate,
-      rentId, // Include rentId
-      tenantId: rent?.tenantId,
-      tenantName: selectedTenantName, // Add tenantName to the data
-    };
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [["Payment_Id", "Amount", "Status"]],
+      body: payments.map((payment: Payment) => [
+        payment.paymentId,
+        payment.amountPaid,
+        payment.active,
+      ]),
+    });
+    doc.save("payments.pdf");
+  };
 
-    const url = paymentId
-      ? `/api/v1/payments/${paymentId}`
-      : "/api/v1/payments";
-    const method = paymentId ? "PUT" : "POST";
+  const exportToExcel = () => {
+    const csvData = payments.map((payment: Payment) => ({
+      Payment_Id: payment.paymentId,
+      Amount: payment.amountPaid,
+      Status: payment.active,
+    }));
 
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Add token to header
-        },
-        body: JSON.stringify(paymentData),
-      });
+    const csvRows = [
+      Object.keys(csvData[0]).join(","), // headers
+      ...csvData.map((row) => Object.values(row).join(",")), // rows
+    ];
 
-      if (res.ok) {
-        new Toastify({
-          text: paymentId
-            ? "Payment updated successfully!"
-            : "Payment added successfully!",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-        }).showToast();
-        router.push("/payments");
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to save payment");
-        new Toastify({
-          text: data.error || "Failed to save payment",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
-      }
-    } catch {
-      setError("An error occurred while saving the payment");
-      new Toastify({
-        text: "An error occurred while saving the payment",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-      }).showToast();
-    }
+    const csvBlob = new Blob([csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    saveAs(csvBlob, "payments.csv");
+  };
+
+  const onEdit = (id: number) => {
+    // Handle edit logic
+  };
+
+  const onDelete = (id: number) => {
+    // Handle delete logic
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-md p-8 bg-gray-100 text-gray-700 shadow-md rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">
-          {paymentId ? "Edit Payment" : "Add Payment"}
-        </h1>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleSubmit}>
-          {/* Editable field for paymentId */}
-          {paymentId !== undefined && (
-            <div className="mb-4">
-              <label htmlFor="paymentId" className="block text-gray-700">
-                Payment ID
-              </label>
-              <input
-                type="number" // Changed to number to match typical ID format
-                id="paymentId"
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
-                value={paymentId}
-                onChange={(e) => setPaymentId(Number(e.target.value))}
-                required
-              />
-            </div>
-          )}
-
-          <div className="mb-4 relative">
-            <label htmlFor="amountPaid" className="block text-gray-700">
-              Amount Paid
-            </label>
-            <div className="flex items-center">
-              <FontAwesomeIcon
-                icon={faDollarSign}
-                className="absolute ml-2 text-gray-400"
-              />
-              <input
-                type="number"
-                id="amountPaid"
-                className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
-                value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="accountPaidTo" className="block text-gray-700">
-              Account Paid To
-            </label>
-            <input
-              type="text"
-              id="accountPaidTo"
-              className="mt-1 p-2 border border-gray-300 rounded w-full"
-              value={accountPaidTo}
-              onChange={(e) => setAccountPaidTo(e.target.value)}
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="paymentDate" className="block text-gray-700">
-              Payment Date
-            </label>
-            <input
-              type="date"
-              id="paymentDate"
-              className="mt-1 p-2 border border-gray-300 rounded w-full"
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="tenant" className="block text-gray-700">
-              Tenant
-            </label>
-            <select
-              id="tenant"
-              className="mt-1 p-2 border border-gray-300 rounded w-full"
-              value={rent?.tenantId || ""}
-              onChange={(e) => {
-                const tenantId = e.target.value;
-                setRent((prevRent) => ({
-                  ...prevRent,
-                  tenantId: tenantId || "", // Ensure tenantId is a string
-                }));
-
-                // Set the tenant name based on selected tenant
-                const selectedTenant = tenants.find(
-                  (tenant) => tenant.id === tenantId
-                );
-                setSelectedTenantName(
-                  selectedTenant ? selectedTenant.fullName : ""
-                );
-              }}
-            >
-              <option value="">Select a tenant</option>
-              {tenants.length > 0 ? (
-                tenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.fullName}
-                  </option>
-                ))
-              ) : (
-                <option value="">No tenants available</option>
-              )}
-            </select>
-          </div>
-          {/* Display selected tenant name */}
-          {selectedTenantName && (
-            <div className="mb-4">
-              <label htmlFor="tenantName" className="block text-gray-700">
-                Tenant Name
-              </label>
-              <input
-                type="text"
-                id="tenantName"
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
-                value={selectedTenantName}
-                readOnly
-              />
-            </div>
-          )}
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+    <div className="container mx-auto px-4">
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={handleSearch}
+          className="p-2 border rounded"
+        />
+        <div className="flex space-x-2">
+          <CSVLink
+            data={payments}
+            filename={"payments.csv"}
+            className="btn btn-primary"
           >
-            {paymentId ? "Update Payment" : "Add Payment"}
+            Export to CSV
+          </CSVLink>
+          <button onClick={exportToPDF} className="btn btn-primary">
+            Export to PDF
           </button>
-        </form>
+          <button onClick={exportToExcel} className="btn btn-primary">
+            Export to Excel
+          </button>
+        </div>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {currentPayments.map((payment: Payment) => (
+          <PaymentCard
+            key={payment.id}
+            payment={payment}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+      <Pagination
+        itemsPerPage={itemsPerPage}
+        totalItems={filteredPayments.length}
+        currentPage={currentPage}
+        paginate={(pageNumber: number) => setCurrentPage(pageNumber)}
+      />
     </div>
   );
 };
 
-export default PaymentForm;
+export default PaymentList;

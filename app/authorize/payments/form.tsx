@@ -2,45 +2,60 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Toastify from "toastify-js"; // Import Toastify
-import "toastify-js/src/toastify.css"; // Import Toastify CSS
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { Rent } from "@prisma/client";
 
 interface PaymentFormProps {
-  paymentId?: number; // Optional ID for editing
+  paymentId?: string; // Changed to string
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
+const PaymentForm: React.FC<PaymentFormProps> = () => {
   const [amountPaid, setAmountPaid] = useState("");
   const [accountPaidTo, setAccountPaidTo] = useState("");
   const [paymentDate, setPaymentDate] = useState("");
+  const [paymentId, setPaymentId] = useState(""); // Ensure this is a string
   const [rent, setRent] = useState({} as Rent);
   const [tenants, setTenants] = useState<any[]>([]);
-  const [selectedTenantName, setSelectedTenantName] = useState<string>(""); // New state for tenant name
+  const [selectedTenantName, setSelectedTenantName] = useState<string>("");
   const [error, setError] = useState("");
-  const [token, setToken] = useState<string>(""); // State for token
+  const [comment, setComment] = useState("");
+  const [token, setToken] = useState<string>("");
+  const [rents, setRents] = useState<Rent[]>([]); // State for rents
+  const [selectedRentId, setSelectedRentId] = useState<number | "">(""); // State for selected rent ID
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const rentId = parseInt(searchParams.get("rentId") || "", 10);
 
   useEffect(() => {
-    // Retrieve token from local storage or any other source
     const storedToken =
       typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
     setToken(storedToken);
   }, []);
 
   useEffect(() => {
-    // Fetch rent details
+    // Fetch rents to populate the dropdown
+    fetch("/api/v1/rents")
+      .then((res) => res.json())
+      .then((data) => setRents(data.data))
+      .catch(() => {
+        setError("Failed to load rents");
+        new Toastify({
+          text: "Failed to load rents",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      });
+
     if (rentId) {
       fetch(`/api/v1/rents/${rentId}`)
         .then((res) => res.json())
-        .then((data) => {
-          setRent(data);
-        })
+        .then((data) => setRent(data))
         .catch(() => {
           setError("Failed to load rent details");
           new Toastify({
@@ -53,10 +68,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
         });
     }
 
-    // Fetch tenants
     fetch("/api/v1/users", {
       headers: {
-        Authorization: `Bearer ${token}`, // Add token to header
+        Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => res.json())
@@ -78,74 +92,42 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
       });
   }, [rentId, token]);
 
-  useEffect(() => {
-    // Fetch payment details if paymentId is provided
-    if (paymentId) {
-      fetch(`/api/v1/payments/${paymentId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setAmountPaid(data.amountPaid);
-          setAccountPaidTo(data.accountPaidTo);
-          setPaymentDate(data.paymentDate);
-          // Set tenant details if available
-          if (data.tenantId) {
-            const tenant = tenants.find((t) => t.id === data.tenantId);
-            if (tenant) {
-              setSelectedTenantName(tenant.fullName);
-            }
-          }
-        })
-        .catch(() => {
-          setError("Failed to load payment details");
-          new Toastify({
-            text: "Failed to load payment details",
-            duration: 3000,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-          }).showToast();
-        });
-    }
-  }, [paymentId, tenants]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Convert paymentDate to ISO-8601 format if not already
+    const isoDate = new Date(paymentDate).toISOString();
+
     const paymentData = {
-      amountPaid,
+      paymentId, // Send as a string
+      comment,
+      amountPaid: parseFloat(amountPaid), // Convert amountPaid to float
       accountPaidTo,
-      paymentDate,
-      rentId,
+      paymentDate: isoDate, // Use ISO-8601 format
+      rentId: selectedRentId, // Include selectedRentId
       tenantId: rent?.tenantId,
-      tenantName: selectedTenantName, // Add tenantName to the data
+      tenantName: selectedTenantName,
     };
 
-    const url = paymentId
-      ? `/api/v1/payments/${paymentId}`
-      : "/api/v1/payments";
-    const method = paymentId ? "PUT" : "POST";
-
     try {
-      const res = await fetch(url, {
-        method,
+      const res = await fetch("/api/v1/payments", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Add token to header
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(paymentData),
       });
 
       if (res.ok) {
         new Toastify({
-          text: paymentId
-            ? "Payment updated successfully!"
-            : "Payment added successfully!",
+          text: "Payment saved successfully!",
           duration: 3000,
           gravity: "top",
           position: "right",
           backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
         }).showToast();
-        router.push("/authorize/payments");
+        router.push("/payments");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save payment");
@@ -172,11 +154,47 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md p-8 bg-gray-100 text-gray-700 shadow-md rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">
-          {paymentId ? "Edit Payment" : "Add Payment"}
-        </h1>
+        <h1 className="text-2xl font-bold mb-4">Payment Form</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="paymentId" className="block text-gray-700">
+              Payment ID
+            </label>
+            <input
+              type="text" // Changed to text to handle string input
+              id="paymentId"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={paymentId}
+              onChange={(e) => setPaymentId(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="rent" className="block text-gray-700">
+              Rent
+            </label>
+            <select
+              id="rent"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={selectedRentId || ""}
+              onChange={(e) => setSelectedRentId(Number(e.target.value))}
+              required
+            >
+              <option value="">Select a rent</option>
+              {rents.length > 0 ? (
+                rents.map((rent) => (
+                  <option key={rent.id} value={rent.id}>
+                    {rent.apartmentId} {/* Assuming rent has a description */}
+                  </option>
+                ))
+              ) : (
+                <option value="">No rents available</option>
+              )}
+            </select>
+          </div>
+
           <div className="mb-4 relative">
             <label htmlFor="amountPaid" className="block text-gray-700">
               Amount Paid
@@ -187,7 +205,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
                 className="absolute ml-2 text-gray-400"
               />
               <input
-                type="number"
+                type="number" // Handle float input
+                step="0.01" // Allow decimal places
                 id="amountPaid"
                 className="mt-1 p-2 pl-10 border border-gray-300 rounded w-full"
                 value={amountPaid}
@@ -196,6 +215,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
               />
             </div>
           </div>
+
           <div className="mb-4">
             <label htmlFor="accountPaidTo" className="block text-gray-700">
               Account Paid To
@@ -209,6 +229,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
               required
             />
           </div>
+
           <div className="mb-4">
             <label htmlFor="paymentDate" className="block text-gray-700">
               Payment Date
@@ -222,6 +243,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
               required
             />
           </div>
+
+          <div className="mb-4">
+            <label htmlFor="comment" className="block text-gray-700">
+              Comment
+            </label>
+            <input
+              type="text"
+              id="comment"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              required
+            />
+          </div>
+
           <div className="mb-4">
             <label htmlFor="tenant" className="block text-gray-700">
               Tenant
@@ -234,10 +270,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
                 const tenantId = e.target.value;
                 setRent((prevRent) => ({
                   ...prevRent,
-                  tenantId: tenantId || "", // Ensure tenantId is a string
+                  tenantId: tenantId || "",
                 }));
 
-                // Set the tenant name based on selected tenant
                 const selectedTenant = tenants.find(
                   (tenant) => tenant.id === tenantId
                 );
@@ -258,7 +293,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
               )}
             </select>
           </div>
-          {/* Display selected tenant name */}
+
           {selectedTenantName && (
             <div className="mb-4">
               <label htmlFor="tenantName" className="block text-gray-700">
@@ -273,11 +308,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
               />
             </div>
           )}
+
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
           >
-            {paymentId ? "Update Payment" : "Add Payment"}
+            Save Payment
           </button>
         </form>
       </div>

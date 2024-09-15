@@ -26,19 +26,24 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   const dispatch: AppDispatch = useDispatch();
 
   const handleDelete = () => {
-    dispatch(deletePayment(payment.id.toString()));
-    onDelete(payment.id);
+    const paymentIdAsNumber = parseInt(payment.paymentId, 10);
+    if (!isNaN(paymentIdAsNumber)) {
+      dispatch(deletePayment(paymentIdAsNumber));
+      onDelete(payment.id);
+    } else {
+      console.error("Invalid paymentId:", payment.paymentId);
+    }
   };
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faCreditCard} className="mr-2 text-gray-600" />
-        {payment.method}
+        {payment.paymentId}
       </h3>
       <p className="text-gray-700 flex items-center mb-2">
         <FontAwesomeIcon icon={faDollarSign} className="mr-2 text-gray-600" />
-        Amount: ${payment.amount.toFixed(2)}
+        Amount: ${payment.amountPaid.toFixed(2)}
       </p>
       <div className="mt-4 flex justify-between">
         <button
