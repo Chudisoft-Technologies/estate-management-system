@@ -18,8 +18,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
   const [buildingId, setBuildingId] = useState<number | null>(null);
   const [apartmentId, setApartmentId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Use default values to ensure buildings and apartments are always arrays
   const buildings =
     useSelector((state: RootState) => state.buildings.buildings) || [];
   const apartments =
@@ -29,8 +29,17 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
   const router = useRouter();
 
   useEffect(() => {
-    dispatch(fetchBuildings());
-    dispatch(fetchApartments());
+    const loadInitialData = async () => {
+      try {
+        await dispatch(fetchBuildings());
+        await dispatch(fetchApartments());
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load buildings or apartments");
+      }
+    };
+
+    loadInitialData();
 
     if (expenseId) {
       // Fetch expense details for editing
@@ -63,10 +72,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
       : "/api/v1/expenses";
     const method = expenseId ? "PUT" : "POST";
 
+    // Assuming the token is stored in localStorage or fetched from state
+    const token = localStorage.getItem("authToken"); // Adjust this to where you store your token
+
     const res = await fetch(url, {
       method,
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
       },
       body: JSON.stringify(expenseData),
     });
@@ -79,6 +92,10 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>; // Show loading state
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md p-8 bg-gray-100 text-gray-700 shadow-md rounded-lg">
@@ -87,6 +104,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
         </h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
+          {/* Description Input */}
           <div className="mb-4">
             <label htmlFor="description" className="block text-gray-700">
               Description
@@ -100,6 +118,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               required
             />
           </div>
+
+          {/* Amount Input */}
           <div className="mb-4">
             <label htmlFor="amount" className="block text-gray-700">
               Amount
@@ -113,6 +133,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               required
             />
           </div>
+
+          {/* Category Input */}
           <div className="mb-4">
             <label htmlFor="category" className="block text-gray-700">
               Category
@@ -126,6 +148,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               required
             />
           </div>
+
+          {/* Building Carousel */}
           <div className="mb-4">
             <label htmlFor="building" className="block text-gray-700">
               Building
@@ -143,7 +167,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
                       buildingId === building.id ? "bg-blue-200" : "bg-white"
                     }`}
                   >
-                    {/* <img src={building.photo || '/default-building.png'} alt={building.name} className="w-16 h-16 rounded-full" /> */}
                     <p className="text-center">{building.name}</p>
                     <p className="text-center text-sm text-gray-500">
                       {building.estate}
@@ -157,6 +180,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               )}
             </div>
           </div>
+
+          {/* Apartment Carousel */}
           <div className="mb-4">
             <label htmlFor="apartment" className="block text-gray-700">
               Apartment
@@ -174,9 +199,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
                       apartmentId === apartment.id ? "bg-green-200" : "bg-white"
                     }`}
                   >
-                    {/* <img src={apartment.building.photo || '/default-apartment.png'} alt={apartment.name} className="w-16 h-16 rounded-full" /> */}
                     <p className="text-center">{apartment.name}</p>
-                    {/* <p className="text-center text-sm text-gray-500">{apartment.building.name}</p> */}
                   </div>
                 ))
               ) : (
@@ -186,6 +209,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               )}
             </div>
           </div>
+
+          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"

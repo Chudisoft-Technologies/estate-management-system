@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { Expense } from "@prisma/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -8,6 +9,7 @@ import {
   faEdit,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import axios from "axios";
 import { useDispatch } from "react-redux";
 import { deleteExpense } from "../../store/expenseSlice";
 import { AppDispatch } from "../../store/index";
@@ -25,9 +27,23 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
 
-  const handleDelete = () => {
-    dispatch(deleteExpense(expense.id)); // Pass number directly
-    onDelete(expense.id);
+  const handleDelete = async () => {
+    const token = localStorage.getItem("authToken"); // Retrieve the token from local storage or wherever it's stored
+
+    try {
+      await axios.delete("/api/expenses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          id: expense.id,
+        },
+      });
+      dispatch(deleteExpense(expense.id)); // Update Redux state
+      onDelete(expense.id); // Call onDelete prop to handle post-delete actions
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+    }
   };
 
   return (
