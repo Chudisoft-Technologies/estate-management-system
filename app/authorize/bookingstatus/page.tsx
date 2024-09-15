@@ -1,20 +1,27 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBookingStatuses } from "../../store/bookingStatusSlice"; // Ensure you have this slice
 import { AppDispatch, RootState } from "../../store";
-import BookingStatusCard from "./BookingStatusCard"; // Ensure you have this component
+import BookingStatusCard from "./BookingStatusCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
-import { CSVLink } from "react-csv";
+import dynamic from "next/dynamic";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
 }
+
+// Dynamically import CSVLink to avoid SSR issues
+const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
+  ssr: false,
+});
 
 const BookingStatusList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -25,10 +32,50 @@ const BookingStatusList: React.FC = () => {
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchBookingStatuses());
-  }, [dispatch]);
+    // Fetch booking statuses directly from the API
+    const fetchBookingStatuses = async () => {
+      try {
+        // Retrieve the token from local storage (or wherever it's stored)
+        const token = localStorage.getItem("token");
+
+        const response = await fetch("/api/v1/bookingstatus", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch booking statuses");
+        const data = await response.json();
+        // Dispatch fetched data to the Redux store or update local state
+        // Assuming you are updating local state directly
+        setCsvData(data.data);
+      } catch (err) {
+        // Show error notification
+        const errorMessage =
+          (err as Error).message || "An unknown error occurred";
+        new Toastify({
+          text: `Error fetching data: ${errorMessage}`,
+          backgroundColor: "#FF0000",
+          className: "error-toast",
+        }).showToast();
+      }
+    };
+
+    fetchBookingStatuses();
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Or a loading spinner
+  }
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -112,13 +159,15 @@ const BookingStatusList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink
-            data={bookingStatuses}
-            filename={"booking_statuses.csv"}
-            className="btn btn-primary"
-          >
-            Export to CSV
-          </CSVLink>
+          {csvData.length > 0 && (
+            <CSVLink
+              data={csvData}
+              filename={"booking_statuses.csv"}
+              className="btn btn-primary"
+            >
+              Export to CSV
+            </CSVLink>
+          )}
           <button onClick={exportToPDF} className="btn btn-primary">
             Export to PDF
           </button>
