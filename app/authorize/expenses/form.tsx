@@ -2,10 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchBuildings } from "../../store/buildingSlice";
-import { fetchApartments } from "../../store/apartmentSlice";
-import { AppDispatch, RootState } from "../../store/index";
 
 interface ExpenseFormProps {
   expenseId?: number; // Optional ID for editing
@@ -17,33 +13,46 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
   const [category, setCategory] = useState("");
   const [buildingId, setBuildingId] = useState<number | null>(null);
   const [apartmentId, setApartmentId] = useState<number | null>(null);
+  const [buildings, setBuildings] = useState<any[]>([]); // Store buildings
+  const [apartments, setApartments] = useState<any[]>([]); // Store apartments
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const buildings =
-    useSelector((state: RootState) => state.buildings.buildings) || [];
-  const apartments =
-    useSelector((state: RootState) => state.apartments.apartments) || [];
-
-  const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        await dispatch(fetchBuildings());
-        await dispatch(fetchApartments());
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to load buildings or apartments");
-      }
-    };
+    const token = localStorage.getItem("authToken"); // Assuming token is stored in localStorage
 
-    loadInitialData();
+    // Fetch buildings
+    fetch("/api/v1/buildings", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setBuildings(data.data); // Set buildings data
+      })
+      .catch(() => setError("Failed to load buildings"));
+
+    // Fetch apartments
+    fetch("/api/v1/apartments", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setApartments(data.data); // Set apartments data
+      })
+      .catch(() => setError("Failed to load apartments"));
 
     if (expenseId) {
       // Fetch expense details for editing
-      fetch(`/api/v1/expenses/${expenseId}`)
+      fetch(`/api/v1/expenses/${expenseId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           setDescription(data.description);
@@ -54,7 +63,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
         })
         .catch(() => setError("Failed to load expense details"));
     }
-  }, [expenseId, dispatch]);
+  }, [expenseId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,13 +76,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
       apartmentId,
     };
 
+    const token = localStorage.getItem("authToken");
     const url = expenseId
       ? `/api/v1/expenses/${expenseId}`
       : "/api/v1/expenses";
     const method = expenseId ? "PUT" : "POST";
-
-    // Assuming the token is stored in localStorage or fetched from state
-    const token = localStorage.getItem("authToken"); // Adjust this to where you store your token
 
     const res = await fetch(url, {
       method,
@@ -92,10 +99,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>; // Show loading state
-  }
-
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md p-8 bg-gray-100 text-gray-700 shadow-md rounded-lg">
@@ -104,7 +107,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
         </h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
-          {/* Description Input */}
           <div className="mb-4">
             <label htmlFor="description" className="block text-gray-700">
               Description
@@ -118,8 +120,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               required
             />
           </div>
-
-          {/* Amount Input */}
           <div className="mb-4">
             <label htmlFor="amount" className="block text-gray-700">
               Amount
@@ -133,8 +133,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               required
             />
           </div>
-
-          {/* Category Input */}
           <div className="mb-4">
             <label htmlFor="category" className="block text-gray-700">
               Category
@@ -148,8 +146,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               required
             />
           </div>
-
-          {/* Building Carousel */}
           <div className="mb-4">
             <label htmlFor="building" className="block text-gray-700">
               Building
@@ -180,8 +176,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               )}
             </div>
           </div>
-
-          {/* Apartment Carousel */}
           <div className="mb-4">
             <label htmlFor="apartment" className="block text-gray-700">
               Apartment
@@ -209,8 +203,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
               )}
             </div>
           </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"

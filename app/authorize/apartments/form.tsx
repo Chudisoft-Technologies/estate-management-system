@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchBuildings } from "../../store/buildingSlice";
-import { AppDispatch, RootState } from "../../store/index";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 interface ApartmentFormProps {
   apartmentId?: number; // Optional ID for editing
@@ -16,31 +15,38 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
   const [costBy, setCostBy] = useState("");
   const [address, setAddress] = useState("");
   const [buildingId, setBuildingId] = useState<number | null>(null);
+  const [buildings, setBuildings] = useState<any[]>([]); // Store fetched buildings
   const [error, setError] = useState("");
   const [isClient, setIsClient] = useState(false); // New state for client-side checks
   const [token, setToken] = useState<string | null>(null); // Store the token in local state
 
-  // Ensure the selector is properly typed and default value is an empty array
-  const buildings =
-    useSelector((state: RootState) => state.buildings.buildings) || [];
-
-  const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    // Ensure code that depends on the client only runs in the browser
+    // Ensure client-side code runs only in the browser
     setIsClient(true);
 
     // Get token from localStorage only on the client side
     const storedToken = localStorage.getItem("token");
     setToken(storedToken);
 
-    dispatch(fetchBuildings());
+    // Fetch buildings directly from API
+    fetch("/api/v1/buildings", {
+      headers: {
+        Authorization: `Bearer ${storedToken}`, // Include token in the Authorization header
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setBuildings(data.data); // Store buildings in state
+      })
+      .catch(() => setError("Failed to load buildings"));
+
     if (apartmentId) {
       // Fetch apartment details for editing
       fetch(`/api/v1/apartments/${apartmentId}`, {
         headers: {
-          Authorization: `Bearer ${token}`, // Add token to headers
+          Authorization: `Bearer ${storedToken}`, // Include token in headers
         },
       })
         .then((res) => res.json())
@@ -54,13 +60,23 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
         })
         .catch(() => setError("Failed to load apartment details"));
     }
-  }, [apartmentId, dispatch, token]);
+  }, [apartmentId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name || cost <= 0 || !costBy || !address || buildingId === null) {
       setError("Please fill in all fields");
+
+      // Show error notification
+      new Toastify({
+        text: "Please fill in all fields",
+        duration: 3000,
+        gravity: "top", // `top` or `bottom`
+        position: "right", // `left`, `center` or `right`
+        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+      }).showToast();
+
       return;
     }
 
@@ -82,13 +98,42 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       });
 
       if (res.ok) {
+        // Show success notification
+        new Toastify({
+          text: apartmentId
+            ? "Apartment updated successfully!"
+            : "Apartment added successfully!",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        }).showToast();
+
         router.push("/authorize/apartments");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save apartment");
+
+        // Show error notification
+        new Toastify({
+          text: data.error || "Failed to save apartment",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
       }
     } catch (error) {
       setError("An unexpected error occurred");
+
+      // Show error notification
+      new Toastify({
+        text: "An unexpected error occurred",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+      }).showToast();
     }
   };
 
