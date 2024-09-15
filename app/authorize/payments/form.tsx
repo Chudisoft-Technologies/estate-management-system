@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // Adjusted import
-import { useSelector, useDispatch } from "react-redux";
-import { fetchRent } from "../../store/rentSlice";
-import { fetchUsers } from "../../store/userSlice";
-import { AppDispatch, RootState } from "../../store/index";
+import { useRouter, useSearchParams } from "next/navigation";
+import Toastify from "toastify-js"; // Import Toastify
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { Rent } from "@prisma/client";
@@ -19,43 +17,96 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
   const [accountPaidTo, setAccountPaidTo] = useState("");
   const [paymentDate, setPaymentDate] = useState("");
   const [rent, setRent] = useState({} as Rent);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [selectedTenantName, setSelectedTenantName] = useState<string>(""); // New state for tenant name
   const [error, setError] = useState("");
+  const [token, setToken] = useState<string>(""); // State for token
 
   const router = useRouter();
-  const searchParams = useSearchParams(); // Using useSearchParams to get query parameters
+  const searchParams = useSearchParams();
   const rentId = parseInt(searchParams.get("rentId") || "", 10);
 
-  //   const rent = useSelector((state: RootState) => state.rents.selectedRent);
-  const tenants = useSelector((state: RootState) => state.users.tenants);
-
-  const dispatch: AppDispatch = useDispatch();
+  useEffect(() => {
+    // Retrieve token from local storage or any other source
+    const storedToken =
+      typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+    setToken(storedToken);
+  }, []);
 
   useEffect(() => {
+    // Fetch rent details
     if (rentId) {
-      // Fetch rent details for editing
       fetch(`/api/v1/rents/${rentId}`)
         .then((res) => res.json())
         .then((data) => {
-          setRent(data.tenantId);
+          setRent(data);
         })
-        .catch(() => setError("Failed to load rent details"));
+        .catch(() => {
+          setError("Failed to load rent details");
+          new Toastify({
+            text: "Failed to load rent details",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          }).showToast();
+        });
     }
-    dispatch(fetchUsers());
-  }, [dispatch, rentId]);
+
+    // Fetch tenants
+    fetch("/api/v1/users", {
+      headers: {
+        Authorization: `Bearer ${token}`, // Add token to header
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const filteredTenants = data.data.filter(
+          (user: any) => user.role === "TENANT"
+        );
+        setTenants(filteredTenants);
+      })
+      .catch(() => {
+        setError("Failed to load tenants");
+        new Toastify({
+          text: "Failed to load tenants",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      });
+  }, [rentId, token]);
 
   useEffect(() => {
+    // Fetch payment details if paymentId is provided
     if (paymentId) {
-      // Fetch payment details for editing (similar to the rent fetch)
       fetch(`/api/v1/payments/${paymentId}`)
         .then((res) => res.json())
         .then((data) => {
           setAmountPaid(data.amountPaid);
           setAccountPaidTo(data.accountPaidTo);
           setPaymentDate(data.paymentDate);
+          // Set tenant details if available
+          if (data.tenantId) {
+            const tenant = tenants.find((t) => t.id === data.tenantId);
+            if (tenant) {
+              setSelectedTenantName(tenant.fullName);
+            }
+          }
         })
-        .catch(() => setError("Failed to load payment details"));
+        .catch(() => {
+          setError("Failed to load payment details");
+          new Toastify({
+            text: "Failed to load payment details",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          }).showToast();
+        });
     }
-  }, [paymentId]);
+  }, [paymentId, tenants]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +117,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
       paymentDate,
       rentId,
       tenantId: rent?.tenantId,
+      tenantName: selectedTenantName, // Add tenantName to the data
     };
 
     const url = paymentId
@@ -73,19 +125,47 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
       : "/api/v1/payments";
     const method = paymentId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(paymentData),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Add token to header
+        },
+        body: JSON.stringify(paymentData),
+      });
 
-    if (res.ok) {
-      router.push("/payments");
-    } else {
-      const data = await res.json();
-      setError(data.error || "Failed to save payment");
+      if (res.ok) {
+        new Toastify({
+          text: paymentId
+            ? "Payment updated successfully!"
+            : "Payment added successfully!",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        }).showToast();
+        router.push("/authorize/payments");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save payment");
+        new Toastify({
+          text: data.error || "Failed to save payment",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      }
+    } catch {
+      setError("An error occurred while saving the payment");
+      new Toastify({
+        text: "An error occurred while saving the payment",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+      }).showToast();
     }
   };
 
@@ -143,21 +223,56 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentId }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700">Tenant</label>
-            <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
-              {tenants.map((tenant) => (
-                <div
-                  key={tenant.id}
-                  className={`cursor-pointer p-2 rounded ${
-                    rent?.tenantId === tenant.id ? "bg-blue-200" : "bg-white"
-                  }`}
-                >
-                  {/* <img src={tenant.image} alt={tenant.name} className="w-16 h-16 rounded-full" /> */}
-                  <p className="text-center">{tenant.fullName}</p>
-                </div>
-              ))}
-            </div>
+            <label htmlFor="tenant" className="block text-gray-700">
+              Tenant
+            </label>
+            <select
+              id="tenant"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={rent?.tenantId || ""}
+              onChange={(e) => {
+                const tenantId = e.target.value;
+                setRent((prevRent) => ({
+                  ...prevRent,
+                  tenantId: tenantId || "", // Ensure tenantId is a string
+                }));
+
+                // Set the tenant name based on selected tenant
+                const selectedTenant = tenants.find(
+                  (tenant) => tenant.id === tenantId
+                );
+                setSelectedTenantName(
+                  selectedTenant ? selectedTenant.fullName : ""
+                );
+              }}
+            >
+              <option value="">Select a tenant</option>
+              {tenants.length > 0 ? (
+                tenants.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.fullName}
+                  </option>
+                ))
+              ) : (
+                <option value="">No tenants available</option>
+              )}
+            </select>
           </div>
+          {/* Display selected tenant name */}
+          {selectedTenantName && (
+            <div className="mb-4">
+              <label htmlFor="tenantName" className="block text-gray-700">
+                Tenant Name
+              </label>
+              <input
+                type="text"
+                id="tenantName"
+                className="mt-1 p-2 border border-gray-300 rounded w-full"
+                value={selectedTenantName}
+                readOnly
+              />
+            </div>
+          )}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"

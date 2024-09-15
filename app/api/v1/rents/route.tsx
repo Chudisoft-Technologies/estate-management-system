@@ -161,7 +161,7 @@ const allowedRoles = ["admin", "user"];
 
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const data = await request.json();
   const newRent = await prisma.rent.create({
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { id, ...data } = await request.json();
   const updatedRent = await prisma.rent.update({
@@ -257,7 +257,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const token = await authenticate(request);
-  if (token !== null) return token;
+  // if (token !== null) return token;
 
   const { searchParams } = new URL(request.url);
   const id = parseInt(searchParams.get("id") || "");

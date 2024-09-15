@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRents } from "../../store/rentSlice"; // Ensure you have this slice
@@ -10,6 +11,8 @@ import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Rent } from "@prisma/client";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 declare module "jspdf" {
   interface jsPDF {
@@ -22,13 +25,44 @@ const RentList: React.FC = () => {
   const { rents, status, error } = useSelector(
     (state: RootState) => state.rents
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(10);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
-    dispatch(fetchRents());
+    const fetchRents = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("/api/v1/rent", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch rents");
+        const data = await response.json();
+      } catch (err) {
+        if (err instanceof Error) {
+          new Toastify({
+            text: err.message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          }).showToast();
+        } else {
+          new Toastify({
+            text: "An unknown error occurred",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          }).showToast();
+        }
+      }
+    };
+
+    fetchRents();
   }, [dispatch]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,18 +95,25 @@ const RentList: React.FC = () => {
       head: [["Apartment ID", "Amount", "Due Date"]],
       body: rents.map((rent: Rent) => [
         rent.apartmentId,
-        rent.amount,
-        rent.dueDate,
+        rent.totalAmount,
+        rent.endDate,
       ]),
     });
     doc.save("rents.pdf");
+    new Toastify({
+      text: "Exported to PDF successfully!",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+    }).showToast();
   };
 
   const exportToExcel = () => {
     const csvData = rents.map((rent: Rent) => ({
       "Apartment ID": rent.apartmentId,
-      Amount: rent.amount,
-      "Due Date": rent.dueDate,
+      Amount: rent.totalAmount,
+      "Due Date": rent.endDate,
     }));
 
     const csvRows = [
@@ -84,6 +125,13 @@ const RentList: React.FC = () => {
       type: "text/csv;charset=utf-8;",
     });
     saveAs(csvBlob, "rents.csv");
+    new Toastify({
+      text: "Exported to CSV successfully!",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+    }).showToast();
   };
 
   const onEdit = (id: number) => {
@@ -106,7 +154,11 @@ const RentList: React.FC = () => {
         />
         <div className="flex space-x-2">
           <CSVLink
-            data={rents}
+            data={rents.map((rent) => ({
+              "Apartment ID": rent.apartmentId,
+              Amount: rent.totalAmount,
+              "Due Date": rent.endDate,
+            }))}
             filename={"rents.csv"}
             className="btn btn-primary"
           >
