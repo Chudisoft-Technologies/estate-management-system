@@ -33,6 +33,15 @@ export const updateRent = createAsyncThunk(
   }
 );
 
+// Define deleteRent async thunk
+export const deleteRent = createAsyncThunk(
+  "rent/deleteRent",
+  async (id: string) => {
+    await axios.delete(`/api/v1/rents/${id}`);
+    return id; // Return the id of the deleted rent
+  }
+);
+
 // Define the initial state
 interface RentState {
   rents: Rent[];
@@ -64,6 +73,11 @@ const rentSlice = createSlice({
       .addCase(fetchRents.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message || null;
+      })
+      .addCase(deleteRent.fulfilled, (state, action) => {
+        state.rents = state.rents.filter(
+          (rent) => rent.id.toString() !== action.payload
+        );
       });
     // Add other cases for the additional thunks if needed
   },

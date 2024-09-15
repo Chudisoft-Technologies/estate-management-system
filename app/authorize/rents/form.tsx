@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchApartments } from "../../store/apartmentSlice";
-import { fetchUsers } from "../../store/userSlice";
-import { AppDispatch, RootState } from "../../store/index";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useRouter } from "next/navigation";
 
 interface RentFormProps {
   rentId?: number; // Optional ID for editing
@@ -20,32 +17,76 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
   const [apartmentId, setApartmentId] = useState<number | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [apartments, setApartments] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
-  const apartments = useSelector(
-    (state: RootState) => state.apartments.apartments
-  );
-  const tenants = useSelector((state: RootState) => state.users.tenants);
-  const dispatch: AppDispatch = useDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    dispatch(fetchApartments());
-    dispatch(fetchUsers());
+    const fetchData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No token found");
+        return;
+      }
 
-    if (rentId) {
-      // Fetch rent details for editing
-      fetch(`/api/v1/rents/${rentId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setStartDate(new Date(data.startDate));
-          setEndDate(new Date(data.endDate));
-          setTotalAmount(data.totalAmount);
-          setApartmentId(data.apartmentId);
-          setTenantId(data.tenantId);
-        })
-        .catch((error) => setError("Failed to load rent details"));
-    }
-  }, [rentId, dispatch]);
+      try {
+        // Fetch apartments
+        const apartmentResponse = await axios.get("/api/v1/apartments", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setApartments(apartmentResponse.data.data || []);
+      } catch (err) {
+        console.error("Error fetching apartments:", err);
+        setError("Failed to fetch apartments");
+      }
+
+      try {
+        // Fetch tenants
+        const userResponse = await axios.get("/api/v1/users", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Filter tenants
+        const filteredTenants = userResponse.data.data.filter(
+          (user: any) => user.role === "TENANT"
+        );
+        setTenants(filteredTenants);
+      } catch (err) {
+        console.error("Error fetching tenants:", err);
+        setError("Failed to fetch users");
+      }
+
+      if (rentId) {
+        try {
+          // Fetch rent details for editing if rentId exists
+          const rentResponse = await axios.get(`/api/v1/rents/${rentId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const rentData = rentResponse.data.data;
+          setStartDate(new Date(rentData.startDate));
+          setEndDate(new Date(rentData.endDate));
+          setTotalAmount(rentData.totalAmount);
+          setApartmentId(rentData.apartmentId);
+          setTenantId(rentData.tenantId);
+        } catch (err) {
+          console.error("Error fetching rent details:", err);
+          setError("Failed to load rent details");
+        }
+      }
+
+      setIsClient(true);
+    };
+
+    fetchData();
+  }, [rentId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +118,11 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
       return;
     }
 
+    if (!tenantId) {
+      setError("Tenant is required");
+      return;
+    }
+
     const rentData = {
       startDate,
       endDate,
@@ -85,22 +131,29 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
       tenantId,
     };
 
+    const token = localStorage.getItem("token");
     const url = rentId ? `/api/v1/rents/${rentId}` : "/api/v1/rents";
     const method = rentId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(rentData),
-    });
+    try {
+      const res = await axios({
+        url,
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        data: rentData,
+      });
 
-    if (res.ok) {
-      router.push("/rents");
-    } else {
-      const data = await res.json();
-      setError(data.error || "Failed to save rent");
+      if (res.status === 200 || 201) {
+        router.push("/authorize/rents");
+      } else {
+        setError(res.data.error || "Failed to save rent");
+      }
+    } catch (err) {
+      console.error("Error saving rent:", err);
+      setError("Failed to save rent");
     }
   };
 
@@ -166,25 +219,23 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
             <label htmlFor="apartment" className="block text-gray-700">
               Apartment
             </label>
-            <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
-              {apartments.map((apartment) => (
-                <div
-                  key={apartment.id}
-                  onClick={() => setApartmentId(apartment.id)}
-                  className={`cursor-pointer p-2 rounded ${
-                    apartmentId === apartment.id ? "bg-green-200" : "bg-white"
-                  }`}
-                >
-                  {/* <img
-                    src={apartment.building.photo || '/default-apartment.png'}
-                    alt={apartment.name}
-                    className="w-16 h-16 rounded-full"
-                  /> */}
-                  <p className="text-center">{apartment.name}</p>
-                  {/* <p className="text-center text-sm text-gray-500">{apartment.building.name}</p> */}
-                </div>
-              ))}
-            </div>
+            <select
+              id="apartment"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={apartmentId || ""}
+              onChange={(e) => setApartmentId(Number(e.target.value))}
+              required
+            >
+              <option value="" disabled>
+                Select an apartment
+              </option>
+              {Array.isArray(apartments) &&
+                apartments.map((apartment) => (
+                  <option key={apartment.id} value={apartment.id}>
+                    {apartment.name}
+                  </option>
+                ))}
+            </select>
           </div>
           <div className="mb-4">
             <label htmlFor="tenant" className="block text-gray-700">
@@ -200,11 +251,12 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
               <option value="" disabled>
                 Select a tenant
               </option>
-              {tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.name} | {tenant.phone}
-                </option>
-              ))}
+              {Array.isArray(tenants) &&
+                tenants.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.fullName} | {tenant.phone}
+                  </option>
+                ))}
             </select>
           </div>
           <button

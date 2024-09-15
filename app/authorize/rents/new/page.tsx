@@ -1,8 +1,8 @@
 import React from "react";
-import ExpenseForm from "../form";
+import RentForm from "../form";
 
-function NewExpenseForm() {
-  return <ExpenseForm />;
+function NewRentForm() {
+  return <RentForm />;
 }
 
-export default NewExpenseForm;
+export default NewRentForm;
