@@ -1,89 +1,81 @@
 "use client";
 
-import React from "react";
-import { Expense } from "@prisma/client";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faReceipt,
-  faMoneyCheckAlt,
-  faEdit,
-  faTrash,
-} from "@fortawesome/free-solid-svg-icons";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useDispatch } from "react-redux";
-import { deleteExpense } from "../../store/expenseSlice";
-import { AppDispatch } from "../../store/index";
+import ExpenseCard from "./ExpenseCard"; // Import the ExpenseCard component
+import { Expense } from "@prisma/client";
+import Toastify from "toastify-js"; // Import Toastify
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
-interface ExpenseCardProps {
-  expense?: Expense; // Made the expense prop optional
-  onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
-}
+const ExpenseList: React.FC = () => {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const ExpenseCard: React.FC<ExpenseCardProps> = ({
-  expense,
-  onEdit,
-  onDelete,
-}) => {
-  const dispatch: AppDispatch = useDispatch();
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("/api/v1/expenses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setExpenses(response.data.data); // Set expenses data
+      } catch (error) {
+        new Toastify({
+          text: "Failed to load expenses",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleDelete = async () => {
-    if (!expense) return; // Check if expense exists
+    fetchExpenses();
+  }, []);
 
-    const token = localStorage.getItem("authToken");
-
-    try {
-      await axios.delete("/api/expenses", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          id: expense.id,
-        },
-      });
-      dispatch(deleteExpense(expense.id)); // Update Redux state
-      onDelete(expense.id); // Call onDelete prop to handle post-delete actions
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-    }
+  const handleEdit = (id: number) => {
+    // Handle editing logic
+    console.log(`Edit expense with ID: ${id}`);
   };
 
-  // Ensure expense is defined before rendering any data
-  if (!expense) {
-    return <div className="text-red-500">Expense data is unavailable</div>;
+  const handleDelete = (id: number) => {
+    setExpenses(expenses.filter((expense) => expense.id !== id));
+    new Toastify({
+      text: "Expense deleted successfully",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+    }).showToast();
+  };
+
+  if (loading) {
+    return <div>Loading...</div>; // Simple loading indicator
   }
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
-      <h3 className="text-xl font-semibold mb-2 flex items-center">
-        <FontAwesomeIcon icon={faReceipt} className="mr-2 text-gray-600" />
-        {expense.name}
-      </h3>
-      <p className="text-gray-700 flex items-center mb-2">
-        <FontAwesomeIcon
-          icon={faMoneyCheckAlt}
-          className="mr-2 text-gray-600"
-        />
-        Amount: ${expense.amount.toFixed(2)}
-      </p>
-      <div className="mt-4 flex justify-between">
-        <button
-          onClick={() => onEdit(expense.id)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
-        >
-          <FontAwesomeIcon icon={faEdit} className="mr-2" />
-          Edit
-        </button>
-        <button
-          onClick={handleDelete}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center"
-        >
-          <FontAwesomeIcon icon={faTrash} className="mr-2" />
-          Delete
-        </button>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Expense List</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {expenses.length > 0 ? (
+          expenses.map((expense) => (
+            <ExpenseCard
+              key={expense.id}
+              expense={expense}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))
+        ) : (
+          <p className="text-gray-500">No expenses found</p>
+        )}
       </div>
     </div>
   );
 };
 
-export default ExpenseCard;
+export default ExpenseList;

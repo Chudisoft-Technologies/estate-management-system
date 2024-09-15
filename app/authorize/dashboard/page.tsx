@@ -115,7 +115,7 @@ const Dashboard = () => {
         <ul>
           <li className="mb-4">
             <Link
-              href="/apartment/dashboard"
+              href="/authorize/dashboard"
               className="text-gray-300 hover:text-white"
             >
               Overview

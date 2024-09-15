@@ -50,8 +50,8 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faReceipt} className="mr-2 text-gray-600" />
-        {expense.name}
       </h3>
+      <h3 className="mr-2 text-gray-600"> {expense.name}</h3>
       <p className="text-gray-700 flex items-center mb-2">
         <FontAwesomeIcon
           icon={faMoneyCheckAlt}

@@ -27,11 +27,11 @@ const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
+    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col my-5">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
-        <FontAwesomeIcon icon={faTag} className="mr-2 text-gray-600" />
-        {bookingStatus.id}
+        <FontAwesomeIcon icon={faTag} className="mr-2 text-black bg-white" />
       </h3>
+      <h3 className="mr-2 text-black bg-white"> {bookingStatus.status}</h3>
       <div className="mt-4 flex justify-between">
         <button
           onClick={() => onEdit(bookingStatus.id)}

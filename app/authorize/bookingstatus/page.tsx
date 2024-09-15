@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
+import { setBookingStatuses } from "@/app/store/bookingStatusSlice"; // Correct import of named action creator
 import BookingStatusCard from "./BookingStatusCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
@@ -36,10 +37,8 @@ const BookingStatusList: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Fetch booking statuses directly from the API
     const fetchBookingStatuses = async () => {
       try {
-        // Retrieve the token from local storage (or wherever it's stored)
         const token = localStorage.getItem("token");
 
         const response = await fetch("/api/v1/bookingstatus", {
@@ -51,11 +50,13 @@ const BookingStatusList: React.FC = () => {
 
         if (!response.ok) throw new Error("Failed to fetch booking statuses");
         const data = await response.json();
-        // Dispatch fetched data to the Redux store or update local state
-        // Assuming you are updating local state directly
+
+        // Update local state
         setCsvData(data.data);
+
+        // Update Redux slice
+        dispatch(setBookingStatuses(data.data)); // Correct usage of action creator
       } catch (err) {
-        // Show error notification
         const errorMessage =
           (err as Error).message || "An unknown error occurred";
         new Toastify({
@@ -67,7 +68,7 @@ const BookingStatusList: React.FC = () => {
     };
 
     fetchBookingStatuses();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -75,6 +76,19 @@ const BookingStatusList: React.FC = () => {
 
   if (!isMounted) {
     return null; // Or a loading spinner
+  }
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (status === "failed" && error) {
+    new Toastify({
+      text: `Error fetching data: ${error}`,
+      backgroundColor: "#FF0000",
+      className: "error-toast",
+    }).showToast();
+    return null;
   }
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,15 +102,10 @@ const BookingStatusList: React.FC = () => {
   };
 
   const filteredBookingStatuses = bookingStatuses
-    .filter(
-      (status) => status.status.toLowerCase().includes(searchTerm.toLowerCase()) // Use status.status for filtering
+    .filter((status) =>
+      status.status.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .sort(
-      (a, b) =>
-        sortOrder === "asc"
-          ? a.id - b.id // Numeric comparison for ascending order
-          : b.id - a.id // Numeric comparison for descending order
-    );
+    .sort((a, b) => (sortOrder === "asc" ? a.id - b.id : b.id - a.id));
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;

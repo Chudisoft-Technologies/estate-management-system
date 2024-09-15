@@ -65,7 +65,11 @@ const initialState: BookingStatusState = {
 const bookingStatusSlice = createSlice({
   name: "bookingstatus",
   initialState,
-  reducers: {},
+  reducers: {
+    setBookingStatuses(state, action) {
+      state.bookingStatuses = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchBookingStatuses.pending, (state) => {
@@ -90,4 +94,5 @@ const bookingStatusSlice = createSlice({
   },
 });
 
+export const { setBookingStatuses } = bookingStatusSlice.actions; // Export the action
 export default bookingStatusSlice.reducer;

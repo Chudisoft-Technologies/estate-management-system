@@ -10,6 +10,7 @@ interface ExpenseFormProps {
 }
 
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
+  const [name, setName] = useState(""); // New state for name
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState(0);
   const [category, setCategory] = useState("");
@@ -73,6 +74,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
             },
           });
           const data = await res.json();
+          setName(data.name); // Set name
           setDescription(data.description);
           setAmount(data.amount);
           setCategory(data.category);
@@ -99,6 +101,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
     e.preventDefault();
 
     const expenseData = {
+      name, // Include name
       description,
       amount,
       category,
@@ -132,7 +135,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
           position: "right",
           backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
         }).showToast();
-        router.push("/expenses");
+        router.push("/authorize/expenses");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save expense");
@@ -164,6 +167,19 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
         </h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-gray-700">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
           <div className="mb-4">
             <label htmlFor="description" className="block text-gray-700">
               Description
@@ -207,58 +223,48 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
             <label htmlFor="building" className="block text-gray-700">
               Building
             </label>
-            <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
+            <select
+              id="building"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={buildingId || ""}
+              onChange={(e) => {
+                setBuildingId(parseInt(e.target.value) || null);
+                setApartmentId(null); // Clear apartment selection if building is chosen
+              }}
+            >
+              <option value="">Select a building</option>
               {buildings.length > 0 ? (
                 buildings.map((building) => (
-                  <div
-                    key={building.id}
-                    onClick={() => {
-                      setBuildingId(building.id);
-                      setApartmentId(null); // Clear apartment selection if building is chosen
-                    }}
-                    className={`cursor-pointer p-2 rounded ${
-                      buildingId === building.id ? "bg-blue-200" : "bg-white"
-                    }`}
-                  >
-                    <p className="text-center">{building.name}</p>
-                    <p className="text-center text-sm text-gray-500">
-                      {building.estate}
-                    </p>
-                  </div>
+                  <option key={building.id} value={building.id}>
+                    {building.name}
+                  </option>
                 ))
               ) : (
-                <p className="text-center text-gray-500">
-                  No buildings available
-                </p>
+                <option value="">No buildings available</option>
               )}
-            </div>
+            </select>
           </div>
           <div className="mb-4">
             <label htmlFor="apartment" className="block text-gray-700">
               Apartment
             </label>
-            <div className="carousel flex space-x-2 overflow-x-scroll p-2 border border-gray-300 rounded">
+            <select
+              id="apartment"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={apartmentId || ""}
+              onChange={(e) => setApartmentId(parseInt(e.target.value) || null)}
+            >
+              <option value="">Select an apartment</option>
               {apartments.length > 0 ? (
                 apartments.map((apartment) => (
-                  <div
-                    key={apartment.id}
-                    onClick={() => {
-                      setApartmentId(apartment.id);
-                      setBuildingId(null); // Clear building selection if apartment is chosen
-                    }}
-                    className={`cursor-pointer p-2 rounded ${
-                      apartmentId === apartment.id ? "bg-green-200" : "bg-white"
-                    }`}
-                  >
-                    <p className="text-center">{apartment.name}</p>
-                  </div>
+                  <option key={apartment.id} value={apartment.id}>
+                    {apartment.name}
+                  </option>
                 ))
               ) : (
-                <p className="text-center text-gray-500">
-                  No apartments available
-                </p>
+                <option value="">No apartments available</option>
               )}
-            </div>
+            </select>
           </div>
           <button
             type="submit"
