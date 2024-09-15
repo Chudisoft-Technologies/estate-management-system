@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 interface BookingStatusFormProps {
   bookingStatusId?: number; // Optional ID for editing
@@ -22,7 +24,7 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
     setIsClient(true);
 
     // Get token from localStorage only on the client side
-    const storedToken = localStorage.getItem("authToken");
+    const storedToken = localStorage.getItem("token");
     setToken(storedToken);
 
     if (bookingStatusId) {
@@ -36,7 +38,15 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
         .then((data) => {
           setStatus(data.status);
         })
-        .catch(() => setError("Failed to load booking status details"));
+        .catch(() => {
+          setError("Failed to load booking status details");
+          new Toastify({
+            text: "Failed to load booking status details",
+            duration: 3000,
+            backgroundColor: "#FF4D4D",
+            stopOnFocus: true,
+          }).showToast();
+        });
     }
   }, [bookingStatusId, token]);
 
@@ -45,14 +55,20 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
 
     if (!status) {
       setError("Please provide a status");
+      new Toastify({
+        text: "Please provide a status",
+        duration: 3000,
+        backgroundColor: "#FF4D4D",
+        stopOnFocus: true,
+      }).showToast();
       return;
     }
 
     const bookingStatusData = { status };
 
     const url = bookingStatusId
-      ? `/api/v1/bookingStatuses/${bookingStatusId}`
-      : "/api/v1/bookingStatuses";
+      ? `/api/v1/bookingstatus/${bookingStatusId}`
+      : "/api/v1/bookingstatus";
     const method = bookingStatusId ? "PUT" : "POST";
 
     try {
@@ -66,13 +82,33 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
       });
 
       if (res.ok) {
-        router.push("/bookingStatuses");
+        new Toastify({
+          text: bookingStatusId
+            ? "Booking Status updated successfully"
+            : "Booking Status added successfully",
+          duration: 3000,
+          backgroundColor: "#4CAF50",
+          stopOnFocus: true,
+        }).showToast();
+        router.push("/authorize/bookingstatus");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save booking status");
+        new Toastify({
+          text: data.error || "Failed to save booking status",
+          duration: 3000,
+          backgroundColor: "#FF4D4D",
+          stopOnFocus: true,
+        }).showToast();
       }
     } catch {
       setError("An unexpected error occurred");
+      new Toastify({
+        text: "An unexpected error occurred",
+        duration: 3000,
+        backgroundColor: "#FF4D4D",
+        stopOnFocus: true,
+      }).showToast();
     }
   };
 
