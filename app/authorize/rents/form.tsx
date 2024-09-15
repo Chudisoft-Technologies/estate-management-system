@@ -146,7 +146,7 @@ const RentForm: React.FC<RentFormProps> = ({ rentId }) => {
         data: rentData,
       });
 
-      if (res.status === 200 || 201) {
+      if (res.status === 200 || res.status === 201) {
         router.push("/authorize/rents");
       } else {
         setError(res.data.error || "Failed to save rent");
