@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Toastify from "toastify-js"; // Import Toastify
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 interface ExpenseFormProps {
   expenseId?: number; // Optional ID for editing
@@ -22,47 +24,75 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
   useEffect(() => {
     const token = localStorage.getItem("authToken"); // Assuming token is stored in localStorage
 
-    // Fetch buildings
-    fetch("/api/v1/buildings", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchBuildings = async () => {
+      try {
+        const res = await fetch("/api/v1/buildings", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
         setBuildings(data.data); // Set buildings data
-      })
-      .catch(() => setError("Failed to load buildings"));
+      } catch {
+        new Toastify({
+          text: "Failed to load buildings",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      }
+    };
 
-    // Fetch apartments
-    fetch("/api/v1/apartments", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchApartments = async () => {
+      try {
+        const res = await fetch("/api/v1/apartments", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
         setApartments(data.data); // Set apartments data
-      })
-      .catch(() => setError("Failed to load apartments"));
+      } catch {
+        new Toastify({
+          text: "Failed to load apartments",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      }
+    };
 
-    if (expenseId) {
-      // Fetch expense details for editing
-      fetch(`/api/v1/expenses/${expenseId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
+    const fetchExpenseDetails = async () => {
+      if (expenseId) {
+        try {
+          const res = await fetch(`/api/v1/expenses/${expenseId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = await res.json();
           setDescription(data.description);
           setAmount(data.amount);
           setCategory(data.category);
           setBuildingId(data.buildingId || null);
           setApartmentId(data.apartmentId || null);
-        })
-        .catch(() => setError("Failed to load expense details"));
-    }
+        } catch {
+          new Toastify({
+            text: "Failed to load expense details",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          }).showToast();
+        }
+      }
+    };
+
+    fetchBuildings();
+    fetchApartments();
+    fetchExpenseDetails();
   }, [expenseId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,20 +112,47 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
       : "/api/v1/expenses";
     const method = expenseId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
-      },
-      body: JSON.stringify(expenseData),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        },
+        body: JSON.stringify(expenseData),
+      });
 
-    if (res.ok) {
-      router.push("/expenses");
-    } else {
-      const data = await res.json();
-      setError(data.error || "Failed to save expense");
+      if (res.ok) {
+        new Toastify({
+          text: expenseId
+            ? "Expense updated successfully!"
+            : "Expense added successfully!",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        }).showToast();
+        router.push("/expenses");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save expense");
+        new Toastify({
+          text: data.error || "Failed to save expense",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      }
+    } catch {
+      setError("An error occurred while saving the expense");
+      new Toastify({
+        text: "An error occurred while saving the expense",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+      }).showToast();
     }
   };
 

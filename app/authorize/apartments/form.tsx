@@ -14,6 +14,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
   const [cost, setCost] = useState(0);
   const [costBy, setCostBy] = useState("");
   const [address, setAddress] = useState("");
+  const [numberOfRooms, setNumberOfRooms] = useState(0); // State for number of rooms
+  const [numberOfPalours, setNumberOfPalours] = useState(0); // State for number of palours
   const [buildingId, setBuildingId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]); // Store fetched buildings
   const [error, setError] = useState("");
@@ -57,6 +59,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
           setCostBy(apartment.costBy);
           setAddress(apartment.address);
           setBuildingId(apartment.buildingId);
+          setNumberOfRooms(apartment.numberOfRooms); // Set number of rooms for editing
+          setNumberOfPalours(apartment.numberOfPalours); // Set number of palours for editing
         })
         .catch(() => setError("Failed to load apartment details"));
     }
@@ -65,7 +69,15 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || cost <= 0 || !costBy || !address || buildingId === null) {
+    if (
+      !name ||
+      cost <= 0 ||
+      !costBy ||
+      !address ||
+      buildingId === null ||
+      numberOfRooms <= 0 || // Validate number of rooms
+      numberOfPalours <= 0 // Validate number of palours
+    ) {
       setError("Please fill in all fields");
 
       // Show error notification
@@ -80,7 +92,15 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       return;
     }
 
-    const apartmentData = { name, cost, costBy, address, buildingId };
+    const apartmentData = {
+      name,
+      cost,
+      costBy,
+      address,
+      buildingId,
+      numberOfRooms,
+      numberOfPalours, // Include number of palours
+    };
 
     const url = apartmentId
       ? `/api/v1/apartments/${apartmentId}`
@@ -198,6 +218,32 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
               className="mt-1 p-2 border border-gray-300 rounded w-full"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="numberOfRooms" className="block text-gray-700">
+              Number of Rooms
+            </label>
+            <input
+              type="number"
+              id="numberOfRooms"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={numberOfRooms}
+              onChange={(e) => setNumberOfRooms(parseInt(e.target.value, 10))}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="numberOfPalours" className="block text-gray-700">
+              Number of Palours
+            </label>
+            <input
+              type="number"
+              id="numberOfPalours"
+              className="mt-1 p-2 border border-gray-300 rounded w-full"
+              value={numberOfPalours}
+              onChange={(e) => setNumberOfPalours(parseInt(e.target.value, 10))}
               required
             />
           </div>

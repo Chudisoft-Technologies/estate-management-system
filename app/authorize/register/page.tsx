@@ -17,6 +17,8 @@ import {
 import { ROLES, Role } from "../../../constants/roles";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/index";
+import Toastify from "toastify-js"; // Import Toastify
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 const RegisterPage = () => {
   // Personal Details
@@ -128,13 +130,38 @@ const RegisterPage = () => {
         }),
       });
 
+      // Check if the response is successful based on your API's response structure
       if (data.success) {
+        new Toastify({
+          text: "Registration successful!",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        }).showToast();
         router.push("/login");
       } else {
+        // If API returned a 201 status but response body indicates failure
         setError(data.error || "An error occurred");
+        new Toastify({
+          text: data.error || "An error occurred",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
       }
     } catch (error) {
+      // Catch unexpected errors
+      console.error("An unexpected error occurred:", error);
       setError("An unexpected error occurred");
+      new Toastify({
+        text: "An unexpected error occurred",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+      }).showToast();
     }
   };
 

@@ -1,9 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchApartments } from "../../store/apartmentSlice";
-import { AppDispatch, RootState } from "../../store";
 import ApartmentCard from "./ApartmentCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
@@ -11,6 +8,8 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Apartment } from "@prisma/client";
 import dynamic from "next/dynamic";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
   ssr: false,
@@ -23,20 +22,44 @@ declare module "jspdf" {
 }
 
 const ApartmentList: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const {
-    apartments = [],
-    status,
-    error,
-  } = useSelector((state: RootState) => state.apartments);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
+  const [status, setStatus] = useState<string>("idle");
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
-    dispatch(fetchApartments());
-  }, [dispatch]);
+    const fetchApartments = async () => {
+      setStatus("loading");
+      const token = localStorage.getItem("authToken"); // Fetch the token from localStorage
+      try {
+        const response = await fetch("/api/v1/apartments", {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add token to headers
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setApartments(data.data || []); // Update with the correct path to data
+        setStatus("succeeded");
+      } catch (error: any) {
+        setError(error.message || "Failed to fetch apartments");
+        setStatus("failed");
+        new Toastify({
+          text: "Failed to fetch apartments",
+          duration: 3000,
+          backgroundColor: "#FF4D4D",
+          stopOnFocus: true,
+        }).showToast();
+      }
+    };
+
+    fetchApartments();
+  }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -48,8 +71,8 @@ const ApartmentList: React.FC = () => {
   };
 
   const filteredApartments = (Array.isArray(apartments) ? apartments : [])
-    .filter((firm: Apartment) =>
-      firm.name.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter((apartment: Apartment) =>
+      apartment.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) =>
       sortOrder === "asc"
@@ -68,15 +91,21 @@ const ApartmentList: React.FC = () => {
     const doc = new jsPDF();
     doc.autoTable({
       head: [["Name", "Address", "Cost", "Cost By", "Building Id"]],
-      body: apartments.map((firm: Apartment) => [
-        firm.name,
-        firm.address,
-        firm.cost,
-        firm.costBy,
-        firm.buildingId,
+      body: apartments.map((apartment: Apartment) => [
+        apartment.name,
+        apartment.address,
+        apartment.cost,
+        apartment.costBy,
+        apartment.buildingId,
       ]),
     });
     doc.save("apartments.pdf");
+    new Toastify({
+      text: "Exported to PDF successfully!",
+      duration: 3000,
+      backgroundColor: "#4CAF50",
+      stopOnFocus: true,
+    }).showToast();
   };
 
   const exportToExcel = () => {
@@ -99,6 +128,12 @@ const ApartmentList: React.FC = () => {
       type: "text/csv;charset=utf-8;",
     });
     saveAs(csvBlob, "apartments.csv");
+    new Toastify({
+      text: "Exported to Excel successfully!",
+      duration: 3000,
+      backgroundColor: "#4CAF50",
+      stopOnFocus: true,
+    }).showToast();
   };
 
   if (status === "loading") {
@@ -144,10 +179,10 @@ const ApartmentList: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {currentApartments.map((firm: Apartment) => (
+        {currentApartments.map((apartment: Apartment) => (
           <ApartmentCard
-            key={firm.id}
-            apartment={firm}
+            key={apartment.id}
+            apartment={apartment}
             onEdit={() => {}}
             onDelete={() => {}}
           />
