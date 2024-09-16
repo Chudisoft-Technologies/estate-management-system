@@ -106,7 +106,7 @@ const PaymentForm: React.FC<PaymentFormProps> = () => {
       paymentDate: isoDate, // Use ISO-8601 format
       rentId: selectedRentId, // Include selectedRentId
       tenantId: rent?.tenantId,
-      tenantName: selectedTenantName,
+      // tenant: selectedTenantName,
     };
 
     try {
@@ -127,7 +127,7 @@ const PaymentForm: React.FC<PaymentFormProps> = () => {
           position: "right",
           backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
         }).showToast();
-        router.push("/payments");
+        router.push("/authorize/payments");
       } else {
         const data = await res.json();
         setError(data.error || "Failed to save payment");
@@ -293,21 +293,6 @@ const PaymentForm: React.FC<PaymentFormProps> = () => {
               )}
             </select>
           </div>
-
-          {selectedTenantName && (
-            <div className="mb-4">
-              <label htmlFor="tenantName" className="block text-gray-700">
-                Tenant Name
-              </label>
-              <input
-                type="text"
-                id="tenantName"
-                className="mt-1 p-2 border border-gray-300 rounded w-full"
-                value={selectedTenantName}
-                readOnly
-              />
-            </div>
-          )}
 
           <button
             type="submit"
