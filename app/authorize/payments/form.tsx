@@ -186,7 +186,7 @@ const PaymentForm: React.FC<PaymentFormProps> = () => {
               {rents.length > 0 ? (
                 rents.map((rent) => (
                   <option key={rent.id} value={rent.id}>
-                    {rent.apartmentId} {/* Assuming rent has a description */}
+                    {rent.totalAmount} {/* Assuming rent has a description */}
                   </option>
                 ))
               ) : (
