@@ -30,34 +30,34 @@ const ApartmentList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  useEffect(() => {
-    const fetchApartments = async () => {
-      setStatus("loading");
-      const token = localStorage.getItem("authToken"); // Fetch the token from localStorage
-      try {
-        const response = await fetch("/api/v1/apartments", {
-          headers: {
-            Authorization: `Bearer ${token}`, // Add token to headers
-          },
-        });
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        setApartments(data.data || []); // Update with the correct path to data
-        setStatus("succeeded");
-      } catch (error: any) {
-        setError(error.message || "Failed to fetch apartments");
-        setStatus("failed");
-        new Toastify({
-          text: "Failed to fetch apartments",
-          duration: 3000,
-          backgroundColor: "#FF4D4D",
-          stopOnFocus: true,
-        }).showToast();
+  const fetchApartments = async () => {
+    setStatus("loading");
+    const token = localStorage.getItem("authToken"); // Fetch the token from localStorage
+    try {
+      const response = await fetch("/api/v1/apartments", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Add token to headers
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
-    };
+      const data = await response.json();
+      setApartments(data.data || []); // Update with the correct path to data
+      setStatus("succeeded");
+    } catch (error: any) {
+      setError(error.message || "Failed to fetch apartments");
+      setStatus("failed");
+      new Toastify({
+        text: "Failed to fetch apartments",
+        duration: 3000,
+        backgroundColor: "#FF4D4D",
+        stopOnFocus: true,
+      }).showToast();
+    }
+  };
 
+  useEffect(() => {
     fetchApartments();
   }, []);
 
@@ -136,6 +136,10 @@ const ApartmentList: React.FC = () => {
     }).showToast();
   };
 
+  const handleDelete = (id: number) => {
+    setApartments((prev) => prev.filter((apartment) => apartment.id !== id));
+  };
+
   if (status === "loading") {
     return <p>Loading...</p>;
   }
@@ -184,7 +188,7 @@ const ApartmentList: React.FC = () => {
             key={apartment.id}
             apartment={apartment}
             onEdit={() => {}}
-            onDelete={() => {}}
+            onDelete={handleDelete} // Pass handleDelete to ApartmentCard
           />
         ))}
       </div>

@@ -1,7 +1,7 @@
-"use client";
-
 import React from "react";
 import { Apartment } from "@prisma/client";
+import { useRouter } from "next/navigation";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuilding,
@@ -10,33 +10,62 @@ import {
   faEdit,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import { useDispatch } from "react-redux";
-import { deleteApartment } from "../../store/apartmentSlice";
-import { AppDispatch, RootState } from "../../store/index";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 interface ApartmentCardProps {
   apartment: Apartment;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }
-
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
   apartment,
   onEdit,
   onDelete,
 }) => {
-  const dispatch: AppDispatch = useDispatch();
+  const router = useRouter();
+  const handleDelete = async () => {
+    try {
+      // Perform the delete request
+      const response = await fetch("/api/v1/apartments", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Include the token for authentication
+        },
+        body: JSON.stringify({ id: apartment.id }),
+      });
 
-  const handleDelete = () => {
-    dispatch(deleteApartment(apartment.id.toString()));
-    onDelete(apartment.id);
+      if (!response.ok) {
+        throw new Error(`Failed to delete apartment: ${response.statusText}`);
+      }
+
+      // Call the onDelete callback after successful deletion
+      onDelete(apartment.id);
+
+      // Show a success message
+      new Toastify({
+        text: "Apartment deleted successfully!",
+        backgroundColor: "#4CAF50",
+        duration: 3000,
+      }).showToast();
+
+      router.push("/authorize/apartments");
+    } catch (error) {
+      // Show an error message if deletion fails
+      new Toastify({
+        text: "Failed to delete apartment.",
+        backgroundColor: "#FF4D4D",
+        duration: 3000,
+      }).showToast();
+    }
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
+    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col my-5">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faBuilding} className="mr-2 text-gray-600" />
-        {apartment.name}
+        <span>{apartment.name}</span>
       </h3>
       <p className="text-gray-700 flex items-center mb-2">
         <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 text-gray-600" />

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, Apartment } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { authenticate } from "../auth/auth";
 
 const prisma = new PrismaClient();
-const allowedRoles = ["admin", "user"];
+
 /**
  * @swagger
  * tags:
@@ -238,14 +238,34 @@ export async function PUT(request: NextRequest) {
   return NextResponse.json(updatedApartment);
 }
 
-export async function DELETE(request: NextRequest) {
-  const token = await authenticate(request);
-  // if (token !== null) return token;
+export async function DELETE(req: NextRequest) {
+  try {
+    // Authenticate the request and extract the token
+    const token = await authenticate(req);
 
-  const { searchParams } = new URL(request.url);
-  const id = parseInt(searchParams.get("id") || "");
-  const deletedApartment = await prisma.apartment.delete({
-    where: { id },
-  });
-  return NextResponse.json(deletedApartment);
+    // If authentication fails, return a 401 Unauthorized response
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Extract the ID from the request body
+    const { id } = await req.json();
+    if (typeof id !== "number") {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    // Perform the deletion
+    const deletedApartment = await prisma.apartment.delete({
+      where: { id },
+    });
+
+    // Return the deleted apartment as JSON
+    return NextResponse.json(deletedApartment, { status: 200 });
+  } catch (error) {
+    // Handle errors and return a 500 Internal Server Error response
+    return NextResponse.json(
+      { error: "Failed to delete apartment" },
+      { status: 500 }
+    );
+  }
 }
