@@ -48,8 +48,8 @@ const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col my-5">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faTag} className="mr-2 text-black bg-white" />
-        <span>{bookingStatus.status}</span>
       </h3>
+      <h3 className="text-black">{bookingStatus.status}</h3>
       <div className="mt-4 flex justify-between">
         <button
           onClick={() => onEdit(bookingStatus.id)}
