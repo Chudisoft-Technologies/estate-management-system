@@ -13,6 +13,8 @@ import {
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/app/store";
 import { login } from "@/app/store/authSlice";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 const LoginPage = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -43,14 +45,28 @@ const LoginPage = () => {
       // Cache the token in local storage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      // console.log(res);
-      // console.log(data);
       // Dispatch the user ID and role to the Redux store
       dispatch(login(data.user));
+
+      new Toastify({
+        text: "Login successful!",
+        backgroundColor: "#4caf50", // Green color
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+      }).showToast();
 
       router.push("/authorize/dashboard");
     } else {
       setError(data.error || "An error occurred");
+
+      new Toastify({
+        text: data.error || "An error occurred",
+        backgroundColor: "#f44336", // Red color
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+      }).showToast();
     }
   };
 

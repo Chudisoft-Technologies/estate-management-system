@@ -1,15 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchPayments } from "../../store/paymentSlice"; // Ensure you have this slice
-import { AppDispatch, RootState } from "../../store";
-import PaymentCard from "./PaymentCard"; // Ensure you have this component
+import PaymentCard from "./PaymentCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Payment } from "@prisma/client";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -18,38 +17,86 @@ declare module "jspdf" {
 }
 
 const PaymentList: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const { payments, status, error } = useSelector(
-    (state: RootState) => state.payments
-  );
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [status, setStatus] = useState<string>("idle");
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [isClient, setIsClient] = useState(false); // Track if the component is mounted on the client
 
   useEffect(() => {
-    dispatch(fetchPayments());
-  }, [dispatch]);
+    const fetchPayments = async () => {
+      setStatus("loading");
+      try {
+        // Get token from localStorage
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No auth token found");
+        }
+
+        const response = await fetch("/api/v1/payments", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        if (data && Array.isArray(data.data)) {
+          setPayments(data.data); // Accessing the nested data
+          setStatus("idle");
+          new Toastify({
+            text: "Payments fetched successfully!",
+            backgroundColor: "green",
+            duration: 3000,
+          }).showToast();
+        } else {
+          throw new Error("Fetched data is not in the expected format");
+        }
+      } catch (err) {
+        setError("Failed to fetch payments");
+        setStatus("failed");
+        new Toastify({
+          text: "Failed to fetch payments!",
+          backgroundColor: "red",
+          duration: 3000,
+        }).showToast();
+      }
+    };
+
+    fetchPayments();
+  }, []);
+
+  useEffect(() => {
+    // Set isClient to true when the component is mounted on the client
+    setIsClient(true);
+  }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSort = (column: keyof (typeof payments)[0]) => {
+  const handleSort = (column: keyof Payment) => {
     const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
     // Sort logic based on column and order
   };
 
-  const filteredPayments = payments
-    .filter((payment: Payment) =>
-      payment.paymentId.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) =>
-      sortOrder === "asc"
-        ? a.paymentId.localeCompare(b.paymentId)
-        : b.paymentId.localeCompare(a.paymentId)
-    );
+  // Ensure payments is always an array
+  const filteredPayments = Array.isArray(payments)
+    ? payments
+        .filter((payment: Payment) =>
+          payment.paymentId.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) =>
+          sortOrder === "asc"
+            ? a.paymentId.localeCompare(b.paymentId)
+            : b.paymentId.localeCompare(a.paymentId)
+        )
+    : [];
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -108,13 +155,15 @@ const PaymentList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          <CSVLink
-            data={payments}
-            filename={"payments.csv"}
-            className="btn btn-primary"
-          >
-            Export to CSV
-          </CSVLink>
+          {isClient && (
+            <CSVLink
+              data={payments}
+              filename={"payments.csv"}
+              className="btn btn-primary"
+            >
+              Export to CSV
+            </CSVLink>
+          )}
           <button onClick={exportToPDF} className="btn btn-primary">
             Export to PDF
           </button>

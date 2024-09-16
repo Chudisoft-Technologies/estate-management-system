@@ -42,7 +42,16 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       .then((data) => {
         setBuildings(data.data); // Store buildings in state
       })
-      .catch(() => setError("Failed to load buildings"));
+      .catch(() => {
+        setError("Failed to load buildings");
+        new Toastify({
+          text: "Failed to load buildings",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+      });
 
     if (apartmentId) {
       // Fetch apartment details for editing
@@ -62,7 +71,16 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
           setNumberOfRooms(apartment.numberOfRooms); // Set number of rooms for editing
           setNumberOfPalours(apartment.numberOfPalours); // Set number of palours for editing
         })
-        .catch(() => setError("Failed to load apartment details"));
+        .catch(() => {
+          setError("Failed to load apartment details");
+          new Toastify({
+            text: "Failed to load apartment details",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+          }).showToast();
+        });
     }
   }, [apartmentId]);
 
@@ -84,8 +102,8 @@ const ApartmentForm: React.FC<ApartmentFormProps> = ({ apartmentId }) => {
       new Toastify({
         text: "Please fill in all fields",
         duration: 3000,
-        gravity: "top", // `top` or `bottom`
-        position: "right", // `left`, `center` or `right`
+        gravity: "top",
+        position: "right",
         backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
       }).showToast();
 
