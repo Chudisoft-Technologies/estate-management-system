@@ -41,7 +41,6 @@ const ExpenseList: React.FC = () => {
       setStatus("loading");
       try {
         const response = await axios.get("/api/v1/expenses");
-        // Access the array of expenses from response.data.data
         const expensesData = response.data.data;
         if (Array.isArray(expensesData)) {
           setExpenses(expensesData);
@@ -120,6 +119,33 @@ const ExpenseList: React.FC = () => {
     setCurrentPage(pageNumber);
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`/api/v1/expenses/${id}`);
+      // After successful deletion, refetch the expenses
+      const response = await axios.get("/api/v1/expenses");
+      const expensesData = response.data.data;
+      if (Array.isArray(expensesData)) {
+        setExpenses(expensesData);
+        setCsvData(expensesData);
+      }
+      new Toastify({
+        text: "Expense deleted successfully!",
+        duration: 3000,
+        backgroundColor: "#4CAF50",
+        stopOnFocus: true,
+      }).showToast();
+    } catch (err) {
+      setError((err as Error).message || "Failed to delete expense");
+      new Toastify({
+        text: "Failed to delete expense. Please try again.",
+        duration: 3000,
+        backgroundColor: "#FF4D4D",
+        stopOnFocus: true,
+      }).showToast();
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between mb-4">
@@ -155,13 +181,13 @@ const ExpenseList: React.FC = () => {
             <ExpenseCard
               key={expense.id}
               expense={expense}
-              onDelete={() => handleDelete(expense.id)} // Ensure this prop is handled properly
+              onDelete={() => handleDelete(expense.id)}
             />
           ))}
 
           <Link
             href={"/authorize/expenses/new"}
-            className="  btn bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            className="btn bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
           >
             Add Expenses
           </Link>
@@ -170,16 +196,12 @@ const ExpenseList: React.FC = () => {
             totalItems={filteredExpenses.length}
             itemsPerPage={itemsPerPage}
             currentPage={currentPage}
-            paginate={handlePageChange} // Provide the paginate function here
+            paginate={handlePageChange}
           />
         </div>
       )}
     </div>
   );
-};
-
-const handleDelete = (id: number) => {
-  // Implement delete logic
 };
 
 export default ExpenseList;
