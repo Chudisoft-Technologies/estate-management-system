@@ -7,13 +7,16 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
   const token = await authenticate(request);
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
+  const { pathname, searchParams } = new URL(request.url);
+
+  // Extract ID from path if provided
+  const idMatch = pathname.match(/\/api\/v1\/bookingstatus\/(\d+)$/);
+  const id = idMatch ? parseInt(idMatch[1]) : null;
 
   if (id) {
     try {
       const bookingstatus = await prisma.bookingStatus.findUnique({
-        where: { id: parseInt(id) },
+        where: { id },
       });
 
       if (bookingstatus) {

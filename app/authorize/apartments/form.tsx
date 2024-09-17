@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
+import React from "react";
 
 interface ApartmentFormProps {
   apartmentId?: number; // Optional ID for editing

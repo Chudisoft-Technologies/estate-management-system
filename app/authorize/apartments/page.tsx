@@ -187,7 +187,7 @@ const ApartmentList: React.FC = () => {
           <ApartmentCard
             key={apartment.id}
             apartment={apartment}
-            onEdit={() => {}}
+            // onEdit={() => {}}
             onDelete={handleDelete} // Pass handleDelete to ApartmentCard
           />
         ))}

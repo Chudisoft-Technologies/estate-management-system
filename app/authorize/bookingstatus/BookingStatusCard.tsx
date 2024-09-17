@@ -8,20 +8,20 @@ import { useDispatch } from "react-redux";
 import { deleteBookingStatus } from "../../store/bookingStatusSlice";
 import { AppDispatch } from "../../store/index";
 import Toastify from "toastify-js";
-import "toastify-js/src/toastify.css"; // Import Toastify CSS
+import "toastify-js/src/toastify.css";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 interface BookingStatusCardProps {
   bookingStatus: BookingStatus;
-  onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }
 
 const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
   bookingStatus,
-  onEdit,
   onDelete,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+  const router = useRouter(); // Initialize useRouter
 
   const handleDelete = () => {
     dispatch(deleteBookingStatus(bookingStatus.id.toString()))
@@ -52,7 +52,9 @@ const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
       <h3 className="text-black">{bookingStatus.status}</h3>
       <div className="mt-4 flex justify-between">
         <button
-          onClick={() => onEdit(bookingStatus.id)}
+          onClick={() =>
+            router.push(`/authorize/bookingstatus/${bookingStatus.id}`)
+          } // Use router.push to navigate
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
         >
           <FontAwesomeIcon icon={faEdit} className="mr-2" />

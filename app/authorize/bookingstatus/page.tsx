@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { setBookingStatuses } from "@/app/store/bookingStatusSlice"; // Correct import of named action creator
+import { setBookingStatuses } from "@/app/store/bookingStatusSlice";
 import BookingStatusCard from "./BookingStatusCard";
 import Pagination from "../../Pagination";
 import { saveAs } from "file-saver";
@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
+import { useRouter } from "next/navigation";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -19,13 +20,13 @@ declare module "jspdf" {
   }
 }
 
-// Dynamically import CSVLink to avoid SSR issues
 const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
   ssr: false,
 });
 
 const BookingStatusList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
+  const router = useRouter();
   const { bookingStatuses, status, error } = useSelector(
     (state: RootState) => state.bookingStatuses
   );
@@ -51,11 +52,8 @@ const BookingStatusList: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch booking statuses");
         const data = await response.json();
 
-        // Update local state
         setCsvData(data.data);
-
-        // Update Redux slice
-        dispatch(setBookingStatuses(data.data)); // Correct usage of action creator
+        dispatch(setBookingStatuses(data.data));
       } catch (err) {
         const errorMessage =
           (err as Error).message || "An unknown error occurred";
@@ -75,7 +73,7 @@ const BookingStatusList: React.FC = () => {
   }, []);
 
   if (!isMounted) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   if (status === "loading") {
@@ -98,7 +96,6 @@ const BookingStatusList: React.FC = () => {
   const handleSort = (column: keyof (typeof bookingStatuses)[0]) => {
     const order = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(order);
-    // Sort logic based on column and order
   };
 
   const filteredBookingStatuses = bookingStatuses
@@ -139,18 +136,14 @@ const BookingStatusList: React.FC = () => {
     }));
 
     const csvRows = [
-      Object.keys(csvData[0]).join(","), // headers
-      ...csvData.map((row) => Object.values(row).join(",")), // rows
+      Object.keys(csvData[0]).join(","),
+      ...csvData.map((row) => Object.values(row).join(",")),
     ];
 
     const csvBlob = new Blob([csvRows.join("\n")], {
       type: "text/csv;charset=utf-8;",
     });
     saveAs(csvBlob, "booking_statuses.csv");
-  };
-
-  const onEdit = (id: number) => {
-    // Handle edit logic
   };
 
   const onDelete = (id: number) => {
@@ -185,12 +178,12 @@ const BookingStatusList: React.FC = () => {
           </button>
         </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {currentBookingStatuses.map((status) => (
           <BookingStatusCard
             key={status.id}
-            bookingStatus={status}
-            onEdit={onEdit}
+            bookingStatus={status} // Ensure this prop matches with BookingStatusCard's expected prop
             onDelete={onDelete}
           />
         ))}

@@ -1,7 +1,6 @@
 import React from "react";
 import { Apartment } from "@prisma/client";
 import { useRouter } from "next/navigation";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuilding,
@@ -15,15 +14,15 @@ import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 interface ApartmentCardProps {
   apartment: Apartment;
-  onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }
+
 const ApartmentCard: React.FC<ApartmentCardProps> = ({
   apartment,
-  onEdit,
   onDelete,
 }) => {
   const router = useRouter();
+
   const handleDelete = async () => {
     try {
       // Perform the delete request
@@ -80,7 +79,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
       </p>
       <div className="mt-4 flex justify-between">
         <button
-          onClick={() => onEdit(apartment.id)}
+          onClick={() => router.push(`/apartment/${apartment.id}/edit`)}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
         >
           <FontAwesomeIcon icon={faEdit} className="mr-2" />

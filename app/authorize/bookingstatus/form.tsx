@@ -1,53 +1,69 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Toastify from "toastify-js";
-import "toastify-js/src/toastify.css"; // Import Toastify CSS
+import "toastify-js/src/toastify.css";
 
-interface BookingStatusFormProps {
-  bookingStatusId?: number; // Optional ID for editing
+interface EditBookingStatusFormProps {
+  bookingStatusId: number; // Required ID for editing
 }
 
-const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
+const EditBookingStatusForm: React.FC<EditBookingStatusFormProps> = ({
   bookingStatusId,
 }) => {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [isClient, setIsClient] = useState(false); // New state for client-side checks
   const [token, setToken] = useState<string | null>(null); // Store the token in local state
+  const [isClient, setIsClient] = useState(false); // New state for client-side checks
 
   const router = useRouter();
 
   useEffect(() => {
-    // Ensure code that depends on the client only runs in the browser
+    console.log("Booking Status ID:", bookingStatusId); // Debugging line
+
+    if (typeof bookingStatusId !== "number" || isNaN(bookingStatusId)) {
+      setError("Invalid booking status ID");
+      new Toastify({
+        text: "Invalid booking status ID",
+        duration: 3000,
+        backgroundColor: "#FF4D4D",
+        stopOnFocus: true,
+      }).showToast();
+      return;
+    }
+
+    // Ensure client-side code runs only in the browser
     setIsClient(true);
 
     // Get token from localStorage only on the client side
     const storedToken = localStorage.getItem("token");
     setToken(storedToken);
 
-    if (bookingStatusId) {
-      // Fetch booking status details for editing
-      fetch(`/api/v1/bookingStatuses/${bookingStatusId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Add token to headers
-        },
+    // Fetch booking status details for editing
+    fetch(`/api/v1/bookingstatus/${bookingStatusId}`, {
+      headers: {
+        Authorization: `Bearer ${storedToken}`, // Add token to headers
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch booking status details");
+        }
+        return res.json();
       })
-        .then((res) => res.json())
-        .then((data) => {
-          setStatus(data.status);
-        })
-        .catch(() => {
-          setError("Failed to load booking status details");
-          new Toastify({
-            text: "Failed to load booking status details",
-            duration: 3000,
-            backgroundColor: "#FF4D4D",
-            stopOnFocus: true,
-          }).showToast();
-        });
-    }
+      .then((data) => {
+        setStatus(data.status);
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load booking status details");
+        new Toastify({
+          text: err.message || "Failed to load booking status details",
+          duration: 3000,
+          backgroundColor: "#FF4D4D",
+          stopOnFocus: true,
+        }).showToast();
+      });
   }, [bookingStatusId, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,14 +82,9 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
 
     const bookingStatusData = { status };
 
-    const url = bookingStatusId
-      ? `/api/v1/bookingstatus/${bookingStatusId}`
-      : "/api/v1/bookingstatus";
-    const method = bookingStatusId ? "PUT" : "POST";
-
     try {
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(`/api/v1/bookingstatus/${bookingStatusId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`, // Use the token from state
@@ -83,9 +94,7 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
 
       if (res.ok) {
         new Toastify({
-          text: bookingStatusId
-            ? "Booking Status updated successfully"
-            : "Booking Status added successfully",
+          text: "Booking Status updated successfully",
           duration: 3000,
           backgroundColor: "#4CAF50",
           stopOnFocus: true,
@@ -93,9 +102,9 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
         router.push("/authorize/bookingstatus");
       } else {
         const data = await res.json();
-        setError(data.error || "Failed to save booking status");
+        setError(data.error || "Failed to update booking status");
         new Toastify({
-          text: data.error || "Failed to save booking status",
+          text: data.error || "Failed to update booking status",
           duration: 3000,
           backgroundColor: "#FF4D4D",
           stopOnFocus: true,
@@ -119,9 +128,7 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md p-8 bg-gray-100 text-gray-700 shadow-md rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">
-          {bookingStatusId ? "Edit Booking Status" : "Add Booking Status"}
-        </h1>
+        <h1 className="text-2xl font-bold mb-4">Edit Booking Status</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -141,7 +148,7 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
           >
-            {bookingStatusId ? "Update Booking Status" : "Add Booking Status"}
+            Update Booking Status
           </button>
         </form>
       </div>
@@ -149,4 +156,4 @@ const BookingStatusForm: React.FC<BookingStatusFormProps> = ({
   );
 };
 
-export default BookingStatusForm;
+export default EditBookingStatusForm;

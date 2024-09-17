@@ -1,6 +1,6 @@
-import { Expense } from "@prisma/client";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { Expense } from "@prisma/client";
 
 // Define async thunks for the expenses
 
@@ -20,27 +20,27 @@ export const fetchExpense = createAsyncThunk<Expense, string>(
   }
 );
 
-export const createExpense = createAsyncThunk(
+export const createExpense = createAsyncThunk<Expense, Omit<Expense, "id">>(
   "expense/createExpense",
-  async (expenseData: Omit<Expense, "id">) => {
+  async (expenseData) => {
     const response = await axios.post("/api/v1/expenses", expenseData);
     return response.data;
   }
 );
 
-export const updateExpense = createAsyncThunk(
+export const updateExpense = createAsyncThunk<Expense, Expense>(
   "expense/updateExpense",
-  async (expenseData: Expense) => {
+  async (expenseData) => {
     const { id, ...rest } = expenseData;
-    const response = await axios.put(`/api/v1/expenses?id=${id}`, rest);
+    const response = await axios.put(`/api/v1/expenses/${id}`, rest);
     return response.data;
   }
 );
 
 export const deleteExpense = createAsyncThunk<number, number>(
   "expense/deleteExpense",
-  async (id: number) => {
-    await axios.delete(`/api/v1/expenses?id=${id}`);
+  async (id) => {
+    await axios.delete(`/api/v1/expenses/${id}`);
     return id;
   }
 );
@@ -67,21 +67,18 @@ const expenseSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch expenses
       .addCase(fetchExpenses.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(fetchExpenses.fulfilled, (state, action) => {
-        state.expenses = action.payload.data;
+        state.expenses = action.payload;
         state.status = "succeeded";
       })
       .addCase(fetchExpenses.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message || null;
       })
-
-      // Fetch single expense
       .addCase(fetchExpense.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -97,8 +94,6 @@ const expenseSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || null;
       })
-
-      // Create expense
       .addCase(createExpense.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -111,8 +106,6 @@ const expenseSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || null;
       })
-
-      // Update expense
       .addCase(updateExpense.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -128,8 +121,6 @@ const expenseSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message || null;
       })
-
-      // Delete expense
       .addCase(deleteExpense.pending, (state) => {
         state.status = "loading";
       })
