@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Apartment } from "@prisma/client";
 import { useRouter } from "next/navigation";
@@ -25,24 +27,20 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
   const handleDelete = async () => {
     try {
-      // Perform the delete request
-      const response = await fetch("/api/v1/apartments", {
+      const response = await fetch(`/api/v1/apartments/${apartment.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Include the token for authentication
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Include the token for authentication
         },
-        body: JSON.stringify({ id: apartment.id }),
       });
 
       if (!response.ok) {
         throw new Error(`Failed to delete apartment: ${response.statusText}`);
       }
 
-      // Call the onDelete callback after successful deletion
       onDelete(apartment.id);
 
-      // Show a success message
       new Toastify({
         text: "Apartment deleted successfully!",
         backgroundColor: "#4CAF50",
@@ -51,7 +49,6 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
 
       router.push("/authorize/apartments");
     } catch (error) {
-      // Show an error message if deletion fails
       new Toastify({
         text: "Failed to delete apartment.",
         backgroundColor: "#FF4D4D",
@@ -64,7 +61,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col my-5">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faBuilding} className="mr-2 text-gray-600" />
-        <span>{apartment.name}</span>
+        {apartment.name}
       </h3>
       <p className="text-gray-700 flex items-center mb-2">
         <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 text-gray-600" />
@@ -79,7 +76,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
       </p>
       <div className="mt-4 flex justify-between">
         <button
-          onClick={() => router.push(`/apartment/${apartment.id}/edit`)}
+          onClick={() => router.push(`/authorize/apartments/${apartment.id}`)}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
         >
           <FontAwesomeIcon icon={faEdit} className="mr-2" />

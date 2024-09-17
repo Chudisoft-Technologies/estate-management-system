@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Building } from "@prisma/client";
+import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuilding,
@@ -9,11 +10,13 @@ import {
   faEdit,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 interface BuildingCardProps {
   building: Building;
   onEdit: (id: number) => void;
-  onDelete: (id: number) => void; // Add onDelete to props
+  onDelete: (id: number) => void;
 }
 
 const BuildingCard: React.FC<BuildingCardProps> = ({
@@ -21,28 +24,42 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const router = useRouter();
+
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/buildings?id=${building.id}`, {
+      const response = await fetch(`/api/v1/buildings/${building.id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Include the token for authentication
+        },
       });
-      if (response.ok) {
-        console.log(`Building ${building.id} deleted successfully`);
-        onDelete(building.id); // Call onDelete prop on successful deletion
-      } else {
-        console.error(`Failed to delete building: ${response.statusText}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete building: ${response.statusText}`);
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Failed to delete building:", error.message);
-      } else {
-        console.error("An unknown error occurred");
-      }
+
+      onDelete(building.id);
+
+      new Toastify({
+        text: "Building deleted successfully!",
+        backgroundColor: "#4CAF50",
+        duration: 3000,
+      }).showToast();
+
+      router.push("/authorize/buildings");
+    } catch (error) {
+      new Toastify({
+        text: "Failed to delete building.",
+        backgroundColor: "#FF4D4D",
+        duration: 3000,
+      }).showToast();
     }
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
+    <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col my-5">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faBuilding} className="mr-2 text-gray-600" />
         {building.name}

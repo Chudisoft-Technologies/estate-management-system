@@ -32,7 +32,7 @@ const ApartmentList: React.FC = () => {
 
   const fetchApartments = async () => {
     setStatus("loading");
-    const token = localStorage.getItem("authToken"); // Fetch the token from localStorage
+    const token = localStorage.getItem("token"); // Fetch the token from localStorage
     try {
       const response = await fetch("/api/v1/apartments", {
         headers: {
