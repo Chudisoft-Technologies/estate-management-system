@@ -6,23 +6,9 @@ import { AppDispatch, RootState } from "../../store";
 import { setBookingStatuses } from "@/app/store/bookingStatusSlice";
 import BookingStatusCard from "./BookingStatusCard";
 import Pagination from "../../Pagination";
-import { saveAs } from "file-saver";
-import dynamic from "next/dynamic";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 import { useRouter } from "next/navigation";
-
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
-
-const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
-  ssr: false,
-});
 
 const BookingStatusList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -34,7 +20,6 @@ const BookingStatusList: React.FC = () => {
   const [itemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [csvData, setCsvData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -52,7 +37,6 @@ const BookingStatusList: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch booking statuses");
         const data = await response.json();
 
-        setCsvData(data.data);
         dispatch(setBookingStatuses(data.data));
       } catch (err) {
         const errorMessage =
@@ -111,43 +95,33 @@ const BookingStatusList: React.FC = () => {
     indexOfLastItem
   );
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.autoTable({
-      head: [["ID", "Status", "Active", "Created At", "Updated At"]],
-      body: bookingStatuses.map((status) => [
-        status.id,
-        status.status,
-        status.active ? "Yes" : "No",
-        status.createdAt.toISOString(),
-        status.updatedAt.toISOString(),
-      ]),
-    });
-    doc.save("booking_statuses.pdf");
-  };
+  const onDelete = async (id: number) => {
+    try {
+      const token = localStorage.getItem("token");
 
-  const exportToExcel = () => {
-    const csvData = bookingStatuses.map((status) => ({
-      ID: status.id,
-      Status: status.status,
-      Active: status.active ? "Yes" : "No",
-      CreatedAt: status.createdAt.toISOString(),
-      UpdatedAt: status.updatedAt.toISOString(),
-    }));
+      const response = await fetch(`/api/v1/bookingstatus/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    const csvRows = [
-      Object.keys(csvData[0]).join(","),
-      ...csvData.map((row) => Object.values(row).join(",")),
-    ];
+      // Remove deleted status from state
+      dispatch(
+        setBookingStatuses(bookingStatuses.filter((status) => status.id !== id))
+      );
 
-    const csvBlob = new Blob([csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    saveAs(csvBlob, "booking_statuses.csv");
-  };
-
-  const onDelete = (id: number) => {
-    // Handle delete logic
+      new Toastify({
+        text: "Booking status deleted successfully!",
+        duration: 3000,
+        backgroundColor: "#4CAF50",
+        stopOnFocus: true,
+      }).showToast();
+    } catch (err) {
+      const errorMessage =
+        (err as Error).message || "An unknown error occurred";
+    }
   };
 
   return (
@@ -161,20 +135,11 @@ const BookingStatusList: React.FC = () => {
           className="p-2 border rounded"
         />
         <div className="flex space-x-2">
-          {csvData.length > 0 && (
-            <CSVLink
-              data={csvData}
-              filename={"booking_statuses.csv"}
-              className="btn btn-primary"
-            >
-              Export to CSV
-            </CSVLink>
-          )}
-          <button onClick={exportToPDF} className="btn btn-primary">
-            Export to PDF
-          </button>
-          <button onClick={exportToExcel} className="btn btn-primary">
-            Export to Excel
+          <button
+            onClick={() => router.push("/authorize/bookingstatus/new")}
+            className="btn btn-primary"
+          >
+            Add Booking Status
           </button>
         </div>
       </div>
@@ -183,7 +148,7 @@ const BookingStatusList: React.FC = () => {
         {currentBookingStatuses.map((status) => (
           <BookingStatusCard
             key={status.id}
-            bookingStatus={status} // Ensure this prop matches with BookingStatusCard's expected prop
+            bookingStatus={status}
             onDelete={onDelete}
           />
         ))}

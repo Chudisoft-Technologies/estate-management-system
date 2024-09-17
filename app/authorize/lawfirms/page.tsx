@@ -17,39 +17,30 @@ const LawFirmList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [isClient, setIsClient] = useState(false);
+  const [status, setStatus] = useState<string>("idle");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLawFirms = async () => {
+      setStatus("loading");
+      const token = localStorage.getItem("token"); // Fetch the token from localStorage
       try {
-        const token = localStorage.getItem("token");
-        console.log("Token:", token); // Debug token
-
         const response = await axios.get("/api/v1/lawfirm", {
-          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        console.log("Fetched data hhh:", response.data.data); // Debug fetched data
-
-        // Check if lawfirms are directly available in response.data
-        const fetchedLawFirms = response.data.data || []; // Adjust as per actual data structure
-        // console.log(fetchLawFirms);
-        if (Array.isArray(fetchedLawFirms)) {
-          setLawfirms(fetchedLawFirms);
-        } else {
-          console.error("Unexpected data format:", response.data);
-          setLawfirms([]);
-        }
-      } catch (error) {
-        console.error("Error fetching law firms:", error);
-        setLawfirms([]);
+        const fetchedLawFirms = response.data.data || []; // Adjust based on API response
+        setLawfirms(fetchedLawFirms);
+        setStatus("succeeded");
+      } catch (error: any) {
+        setError(error.message || "Failed to fetch law firms");
+        setStatus("failed");
       }
+      setIsClient(true);
     };
 
     fetchLawFirms();
-    setIsClient(true);
   }, []);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,6 +99,14 @@ const LawFirmList: React.FC = () => {
     saveAs(csvBlob, "lawfirms.csv");
   };
 
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
+
+  if (status === "failed") {
+    return <p>Error: {error}</p>;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-4">
@@ -118,11 +117,10 @@ const LawFirmList: React.FC = () => {
           onChange={handleSearch}
           className="p-2 border border-gray-300 rounded"
         />
-
         <div className="flex space-x-2">
           {isClient && (
             <CSVLink
-              data={lawfirms.map((firm) => ({
+              data={filteredLawFirms.map((firm) => ({
                 Name: firm.name,
                 Address: firm.address,
                 Phone: firm.phone,

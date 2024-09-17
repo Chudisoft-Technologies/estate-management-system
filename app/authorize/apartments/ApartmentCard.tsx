@@ -61,7 +61,7 @@ const ApartmentCard: React.FC<ApartmentCardProps> = ({
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col my-5">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faBuilding} className="mr-2 text-gray-600" />
-        {apartment.name}
+        <span className="text-black"> {apartment.name}</span>
       </h3>
       <p className="text-gray-700 flex items-center mb-2">
         <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 text-gray-600" />

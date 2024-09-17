@@ -8,9 +8,9 @@ import {
   faEdit,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import { useDispatch } from "react-redux";
-import { deletePayment } from "../../store/paymentSlice";
-import { AppDispatch } from "../../store/index";
+import { useRouter } from "next/navigation";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css"; // Import Toastify CSS
 
 interface PaymentCardProps {
   payment: Payment;
@@ -23,15 +23,37 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const dispatch: AppDispatch = useDispatch();
+  const router = useRouter();
 
-  const handleDelete = () => {
-    const paymentIdAsNumber = parseInt(payment.paymentId, 10);
-    if (!isNaN(paymentIdAsNumber)) {
-      dispatch(deletePayment(paymentIdAsNumber));
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/v1/payments/${payment.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Include the token for authentication
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete payment: ${response.statusText}`);
+      }
+
       onDelete(payment.id);
-    } else {
-      console.error("Invalid paymentId:", payment.paymentId);
+
+      new Toastify({
+        text: "Payment deleted successfully!",
+        backgroundColor: "#4CAF50",
+        duration: 3000,
+      }).showToast();
+
+      router.push("/authorize/payments"); // Adjust the route as necessary
+    } catch (error) {
+      new Toastify({
+        text: "Failed to delete payment.",
+        backgroundColor: "#FF4D4D",
+        duration: 3000,
+      }).showToast();
     }
   };
 
@@ -39,11 +61,13 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
     <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col">
       <h3 className="text-xl font-semibold mb-2 flex items-center">
         <FontAwesomeIcon icon={faCreditCard} className="mr-2 text-gray-600" />
-        {payment.paymentId}
+        <span className="text-black"> {payment.paymentId}</span>
       </h3>
       <p className="text-gray-700 flex items-center mb-2">
         <FontAwesomeIcon icon={faDollarSign} className="mr-2 text-gray-600" />
-        Amount: ${payment.amountPaid.toFixed(2)}
+        <span className="text-black">
+          Amount: ${payment.amountPaid.toFixed(2)}{" "}
+        </span>
       </p>
       <div className="mt-4 flex justify-between">
         <button

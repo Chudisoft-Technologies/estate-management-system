@@ -7,9 +7,10 @@ import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Rent } from "@prisma/client";
+import dynamic from "next/dynamic";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
-import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
   ssr: false,
@@ -35,24 +36,19 @@ const RentList: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setStatus("loading");
+      const token = localStorage.getItem("token"); // Fetch the token from localStorage
       try {
-        const token = localStorage.getItem("token");
         const response = await fetch("/api/v1/rents", {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`, // Add token to headers
           },
         });
         if (!response.ok) throw new Error("Failed to fetch rents");
         const data = await response.json();
-
-        // Extract the rents from the data object
         const rentsData: Rent[] = data.data;
-
-        // Check if rentsData is an array
         if (!Array.isArray(rentsData)) {
           throw new Error("Unexpected data format");
         }
-
         setRents(rentsData);
         setStatus("succeeded");
       } catch (err) {
@@ -69,7 +65,6 @@ const RentList: React.FC = () => {
         }).showToast();
       }
     };
-
     fetchData();
   }, [error]);
 
@@ -82,6 +77,7 @@ const RentList: React.FC = () => {
     setSortOrder(order);
     // Sort logic based on column and order
   };
+  const router = useRouter();
 
   const filteredRents = Array.isArray(rents)
     ? rents
@@ -150,12 +146,22 @@ const RentList: React.FC = () => {
   };
 
   const onEdit = (id: number) => {
-    // Handle edit logic
+    // Redirect to the edit page for the specific rent item
+    router.push(`/authorize/rents/${id}`);
   };
 
   const onDelete = (id: number) => {
-    // Handle delete logic
+    // Re-fetch the data to update the list after deletion
+    setRents(rents.filter((rent) => rent.id !== id));
   };
+
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
+
+  if (status === "failed") {
+    return <p>Error: {error}</p>;
+  }
 
   return (
     <div className="container mx-auto px-4">
@@ -192,8 +198,8 @@ const RentList: React.FC = () => {
           <RentCard
             key={rent.id}
             rent={rent}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            onEdit={onEdit} // Pass onEdit function correctly
+            onDelete={onDelete} // Pass onDelete function correctly
           />
         ))}
       </div>

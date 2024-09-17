@@ -1,15 +1,11 @@
-"use client";
-
+import axios from "axios";
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 import React from "react";
 import { BookingStatus } from "@prisma/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTag, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { useDispatch } from "react-redux";
-import { deleteBookingStatus } from "../../store/bookingStatusSlice";
-import { AppDispatch } from "../../store/index";
-import Toastify from "toastify-js";
-import "toastify-js/src/toastify.css";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
 
 interface BookingStatusCardProps {
   bookingStatus: BookingStatus;
@@ -20,28 +16,26 @@ const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
   bookingStatus,
   onDelete,
 }) => {
-  const dispatch: AppDispatch = useDispatch();
   const router = useRouter(); // Initialize useRouter
 
-  const handleDelete = () => {
-    dispatch(deleteBookingStatus(bookingStatus.id.toString()))
-      .then(() => {
-        onDelete(bookingStatus.id);
-        new Toastify({
-          text: "Booking status deleted successfully!",
-          duration: 3000,
-          backgroundColor: "#4CAF50",
-          stopOnFocus: true,
-        }).showToast();
-      })
-      .catch(() => {
-        new Toastify({
-          text: "Failed to delete booking status.",
-          duration: 3000,
-          backgroundColor: "#FF4D4D",
-          stopOnFocus: true,
-        }).showToast();
-      });
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/api/v1/bookingstatus/${bookingStatus.id}`);
+      onDelete(bookingStatus.id); // Notify parent component to remove item from UI
+      new Toastify({
+        text: "Booking status deleted successfully!",
+        duration: 3000,
+        backgroundColor: "#4CAF50",
+        stopOnFocus: true,
+      }).showToast();
+    } catch (error) {
+      new Toastify({
+        text: "Failed to delete booking status.",
+        duration: 3000,
+        backgroundColor: "#FF4D4D",
+        stopOnFocus: true,
+      }).showToast();
+    }
   };
 
   return (
@@ -50,6 +44,7 @@ const BookingStatusCard: React.FC<BookingStatusCardProps> = ({
         <FontAwesomeIcon icon={faTag} className="mr-2 text-black bg-white" />
       </h3>
       <h3 className="text-black">{bookingStatus.status}</h3>
+      <h3 className="text-black">ID: {bookingStatus.id}</h3>
       <div className="mt-4 flex justify-between">
         <button
           onClick={() =>
