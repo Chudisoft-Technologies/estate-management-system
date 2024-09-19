@@ -10,6 +10,7 @@ import { Apartment } from "@prisma/client";
 import dynamic from "next/dynamic";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css"; // Import Toastify CSS
+import Link from "next/link";
 
 const CSVLink = dynamic(() => import("react-csv").then((mod) => mod.CSVLink), {
   ssr: false,
@@ -150,6 +151,10 @@ const ApartmentList: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4">
+      <br />
+      <br />
+      <br />
+      <br />
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
@@ -192,6 +197,18 @@ const ApartmentList: React.FC = () => {
           />
         ))}
       </div>
+      <br />
+      <br />
+      <Link
+        href={"/authorize/apartments/new"}
+        className="btn bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        New Apartment
+      </Link>
+      <br />
+      <br />
+      <br />
+      <br />
       <Pagination
         itemsPerPage={itemsPerPage}
         totalItems={filteredApartments.length}
