@@ -32,7 +32,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`, // Include the token for authentication
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Include the token for authentication
         },
       });
 

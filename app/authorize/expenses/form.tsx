@@ -23,7 +23,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken"); // Assuming token is stored in localStorage
+    const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
 
     const fetchBuildings = async () => {
       try {
@@ -109,7 +109,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expenseId }) => {
       apartmentId,
     };
 
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("token");
     const url = expenseId
       ? `/api/v1/expenses/${expenseId}`
       : "/api/v1/expenses";

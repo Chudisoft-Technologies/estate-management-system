@@ -140,6 +140,10 @@ const BuildingList: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4">
+      <br />
+      <br />
+      <br />
+      <br />
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"

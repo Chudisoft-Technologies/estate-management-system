@@ -5,6 +5,7 @@ import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 
 const EditRentForm: React.FC = () => {
   const router = useRouter();
@@ -257,6 +258,7 @@ const EditRentForm: React.FC = () => {
                 ))}
             </select>
           </div>
+
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"

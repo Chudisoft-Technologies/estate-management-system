@@ -9,6 +9,7 @@ import "jspdf-autotable";
 import { Payment } from "@prisma/client";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
+import Link from "next/link";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -182,6 +183,19 @@ const PaymentList: React.FC = () => {
           />
         ))}
       </div>
+
+      <br />
+      <br />
+      <Link
+        href={"/authorize/payments/new"}
+        className="btn bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        Add payment
+      </Link>
+      <br />
+      <br />
+      <br />
+      <br />
       <Pagination
         itemsPerPage={itemsPerPage}
         totalItems={filteredPayments.length}

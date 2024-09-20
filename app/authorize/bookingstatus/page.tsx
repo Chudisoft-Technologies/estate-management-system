@@ -9,6 +9,7 @@ import Pagination from "../../Pagination";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const BookingStatusList: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -157,6 +158,19 @@ const BookingStatusList: React.FC = () => {
           />
         ))}
       </div>
+      <br />
+      <br />
+      <Link
+        href={"/authorize/bookingstatus/new"}
+        className="btn bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        Add Status
+      </Link>
+      <br />
+      <br />
+      <br />
+      <br />
+
       <Pagination
         itemsPerPage={itemsPerPage}
         totalItems={filteredBookingStatuses.length}

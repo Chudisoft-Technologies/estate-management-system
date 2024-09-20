@@ -9,6 +9,7 @@ import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { LawFirm } from "@prisma/client";
+import Link from "next/link";
 
 const LawFirmList: React.FC = () => {
   const [lawfirms, setLawfirms] = useState<LawFirm[]>([]);
@@ -150,7 +151,18 @@ const LawFirmList: React.FC = () => {
           <p>No law firms found.</p>
         )}
       </div>
-
+      <br />
+      <br />
+      <Link
+        href={"/authorize/lawfirms/new"}
+        className="btn bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        Add lawfirm
+      </Link>
+      <br />
+      <br />
+      <br />
+      <br />
       <div className="flex justify-center mb-8">
         <Pagination
           itemsPerPage={itemsPerPage}

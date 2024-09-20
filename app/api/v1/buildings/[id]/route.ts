@@ -10,7 +10,6 @@ export async function GET(
 ) {
   const token = await authenticate(request);
 
-  // Extract ID from params
   const id = parseInt(params.id);
 
   if (isNaN(id)) {
@@ -30,9 +29,9 @@ export async function GET(
         { status: 404 }
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     const errorMessage =
-      (error as Error).message || "Error retrieving building";
+      error instanceof Error ? error.message : "Error retrieving building";
     return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
@@ -57,8 +56,55 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedBuilding);
-  } catch (error) {
-    const errorMessage = (error as Error).message || "Error updating building";
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Error updating building";
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
+  }
+}
+
+// DELETE function to remove a building
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const token = await authenticate(request);
+
+  const id = parseInt(params.id);
+
+  if (isNaN(id)) {
+    return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
+  }
+
+  try {
+    // Use a transaction to delete related records and the building
+    await prisma.$transaction(async (tx) => {
+      // Delete all apartments related to the building
+      await tx.apartment.deleteMany({ where: { buildingId: id } });
+
+      // Delete all expenses related to the building
+      await tx.expense.deleteMany({ where: { buildingId: id } });
+
+      // Add additional deleteMany calls for other related models as needed
+      // e.g. await tx.buildingFeature.deleteMany({ where: { buildingId: id } });
+      // e.g. await tx.utility.deleteMany({ where: { buildingId: id } });
+
+      // Finally, delete the building itself
+      await tx.building.delete({ where: { id } });
+    });
+
+    return NextResponse.json({
+      message: "Building deleted successfully",
+    });
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Error deleting building";
+    if ((error as any).code === "P2025") {
+      return NextResponse.json(
+        { message: "Building not found" },
+        { status: 404 }
+      );
+    }
     return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
